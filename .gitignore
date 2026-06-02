@@ -1,0 +1,105 @@
+# =============================================================================
+# .gitignore -- Precision Thermistor Thermometer
+# MicroPython firmware (Raspberry Pi Pico W) + hardware design + docs
+# =============================================================================
+
+# --- macOS -------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+Icon?
+
+# --- Windows -----------------------------------------------------------------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Linux -------------------------------------------------------------------
+*~
+.directory
+.Trash-*
+
+# --- Python / MicroPython ----------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.mpy
+.mpy_cache/
+build/
+dist/
+*.egg-info/
+.eggs/
+.Python
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# --- Tooling caches ----------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editors / IDEs ----------------------------------------------------------
+# VS Code
+.vscode/
+*.code-workspace
+# JetBrains
+.idea/
+# Thonny (common MicroPython editor)
+.thonny/
+# Vim / Emacs / misc
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# --- KiCad / EDA backups & generated output ----------------------------------
+# Keep source schematics/PCBs; ignore autosaves, backups, and caches.
+*-bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.000
+_autosave-*
+*.lck
+fp-info-cache
+sym-lib-table.bak
+*.kicad_prl
+# Generated fabrication output (regenerate from source)
+gerbers/
+*.gbr
+*.drl
+*.gbl
+*.gbo
+*.gbp
+*.gbs
+*.gtl
+*.gto
+*.gtp
+*.gts
+
+# --- Logs & local secrets ----------------------------------------------------
+*.log
+secrets.py
+.env
+.env.local
+
+# =============================================================================
+# NOTE: Instrument CSV captures live in data/ (see data/README.md).
+# Commit characterisation runs you want to keep; uncomment below to ignore
+# all local CSV logs by default instead.
+# data/*.csv
+# =============================================================================
