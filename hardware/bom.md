@@ -24,7 +24,7 @@
 |---|---|---|
 | Q1 | Logic-level PMOS | pulsed-excitation switch; deferred — only a non-logic-level IRFD9024 was available, so continuous excitation is used instead |
 | R_g1,R_g2 | 10 kΩ | PMOS gate drive (only if Q1 fitted) |
-| U3 | DS18B20 | ambient 1-Wire sensor; planned addition (GP4 + 4.7 kΩ pull-up) |
+| U3, J3, R_pu1 | DS18B20 + 1-Wire jack + 4.7 kΩ pull-up | ambient 1-Wire sensor. **Drawn in the KiCad schematic** (`ADS1115BasicDesign`) as an optional addition, but **not fitted in the build shown here** — the firmware reads it if present (`t_amb_c` column) and skips it otherwise |
 
 ### Calibration / test equipment
 

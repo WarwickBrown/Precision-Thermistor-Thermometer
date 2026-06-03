@@ -78,6 +78,7 @@ _autosave-*
 fp-info-cache
 sym-lib-table.bak
 *.kicad_prl
+*-backups/
 # Generated fabrication output (regenerate from source)
 gerbers/
 *.gbr

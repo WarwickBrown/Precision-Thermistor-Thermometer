@@ -14,10 +14,10 @@ The work is part of a BSc Eng (Electrical Engineering) research project at the
 **University of the Witwatersrand**, supervised by **Prof. Mitchell Cox**
 (research title still to be decided).
 
-> **Status:** working two-channel prototype on soldered stripboard. Thermistors
-> characterised; live UI complete; rigorous stability (Allan-deviation)
-> characterisation and the 3D-printed enclosure are in progress. See
-> [Project status](#project-status).
+> **Status:** working two-channel prototype on soldered stripboard, housed in a
+> 3D-printed enclosure. Thermistors characterised and the live UI is complete;
+> the rigorous stability (Allan-deviation) characterisation is the remaining
+> milestone. See [Project status](#project-status).
 
 ![The Box — two-channel thermistor thermometer](images/system_overview.jpg)
 
@@ -116,6 +116,7 @@ the-box-thermometer/
 │   ├── display.py            ← multi-page LCD UI (joystick-navigated)
 │   └── main.py               ← measurement loop (USB + flash CSV logging)
 ├── hardware/
+│   ├── ADS1115BasicDesign.*  ← KiCad schematic + BOM (draws an optional DS18B20 not fitted here)
 │   ├── schematic_bridge.png  ← bridge + ADC front-end
 │   ├── netlist.md            ← full from-to netlist
 │   └── bom.md                ← bill of materials

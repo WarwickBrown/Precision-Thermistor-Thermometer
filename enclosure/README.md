@@ -11,7 +11,15 @@ Source CAD and meshes:
 | `cover.step` | portable STEP solid (for other CAD tools) |
 | `cover.stl` | mesh, ready to slice and print |
 
-![3D-printed enclosure with the board fitted](../images/enclosure.jpg)
+![3D-printed enclosure, top with the LCD window and label](../images/enclosure.jpg)
+
+<p align="center">
+  <img src="../images/enclosure_usb.jpg"  width="32%" alt="USB Type-B port side">
+  <img src="../images/enclosure_aux.jpg"  width="32%" alt="AUX side with A / B probe jacks">
+  <img src="../images/enclosure_back.jpg" width="32%" alt="base, engraved with the repo URL">
+</p>
+
+*USB side, the labelled A / B AUX jacks, and the engraved base.*
 
 ## Note
 

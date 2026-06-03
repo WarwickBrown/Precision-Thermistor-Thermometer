@@ -29,6 +29,8 @@ Sleeve = shield grounded at the board end only). The thin inner conductors of
 aux cable are **enamelled** — they must be tinned/scraped before they make
 contact, which initially looked like a broken cable.
 
+![Thermistor probe leads — the enamelled inner conductors tinned ready to terminate](../images/probes.jpg)
+
 ## 4. Two-channel (Option C)
 
 Both probes on independent differential pairs: CH1 = AIN0−AIN1,

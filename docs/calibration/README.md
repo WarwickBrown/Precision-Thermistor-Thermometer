@@ -10,8 +10,8 @@ coefficients live in [`../../firmware/config.py`](../../firmware/config.py).
 |---|---|
 | `V2_Thermistor_Measurement.xlsx` | master workbook: the (T, R) sweep, the B-model fit, and residuals |
 | `sweep_raw.csv` *(optional)* | plain-text export of the (T, R) pairs, for tools that can't read `.xlsx` |
-| `residuals.png` | residuals-vs-temperature plot embedded in the write-up |
-| `setup.jpg` | photo of the water bath + UT71B reference during the sweep |
+| `residuals.png` *(optional)* | residuals-vs-temperature plot, if exported from the workbook |
+| `setup.jpg` *(optional)* | photo of the water bath + UT71B reference during the sweep |
 
 ## (T, R) column format
 
