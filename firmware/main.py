@@ -35,6 +35,41 @@ def _pick(override, default):
     return default if override is None else override
 
 
+_CSV_HEADER = ("cycle,t_s,vdiff1_uv,r1_ohm,t1_c,"
+               "vdiff2_uv,r2_ohm,t2_c,t_amb_c")
+
+
+def _flash_log_init():
+    """Open the flash log for appending; write a header if the file is new.
+    Returns an open file handle, or None if logging to flash is off/failed."""
+    if not config.LOG_TO_FLASH:
+        return None
+    try:
+        import os
+        new = True
+        try:
+            if os.stat(config.LOG_FILENAME)[6] > 0:   # size > 0 => existing
+                new = False
+        except OSError:
+            new = True
+        fh = open(config.LOG_FILENAME, "a")
+        if new:
+            fh.write(_CSV_HEADER + "\n")
+            fh.flush()
+        return fh
+    except Exception as e:
+        print("[flash] logging disabled (%s)" % e)
+        return None
+
+
+def _flash_size():
+    try:
+        import os
+        return os.stat(config.LOG_FILENAME)[6]
+    except Exception:
+        return 0
+
+
 def build_channels():
     ch1 = Channel(
         "CH1", config.V_EXC,
@@ -122,10 +157,16 @@ def main():
 
     # CSV header over USB serial
     if config.LOG_TO_CONSOLE:
-        print("cycle,t_s,vdiff1_uv,r1_ohm,t1_c,"
-              "vdiff2_uv,r2_ohm,t2_c,t_amb_c")
+        print(_CSV_HEADER)
+
+    # Flash log (append mode; survives USB disconnect)
+    flash = _flash_log_init()
+    flash_full = False
+    if flash:
+        print("[flash] logging to %s" % config.LOG_FILENAME)
 
     cycle = 0
+    consecutive_errs = 0
     t_start = time.ticks_ms()
 
     while True:
@@ -143,9 +184,20 @@ def main():
         try:
             v1, _ = adc.read_diff_avg(1, config.N_AVG)
             v2, _ = adc.read_diff_avg(2, config.N_AVG)
+            consecutive_errs = 0
         except OSError as e:
             bridge_off(pulse)
-            print("[loop] I2C error (%s) on cycle %d; skipping." % (e, cycle))
+            consecutive_errs += 1
+            print("[loop] I2C error (%s) on cycle %d (x%d); skipping."
+                  % (e, cycle, consecutive_errs))
+            # After several straight failures, try to re-init the bus once.
+            if consecutive_errs in (5, 20, 50):
+                print("[loop] attempting I2C bus re-init...")
+                try:
+                    i2c.init(scl=Pin(config.PIN_SCL), sda=Pin(config.PIN_SDA),
+                             freq=config.I2C_FREQ)
+                except Exception as ie:
+                    print("[loop] re-init failed (%s)" % ie)
             time.sleep(1)
             continue
 
@@ -168,16 +220,30 @@ def main():
         # --- display: push new data, then poll UI during cooldown ---
         display.push(t1, r1, t2, r2, t_amb, cycle)
 
-        # --- log ---
+        # --- build the CSV line once ---
+        t_s = time.ticks_diff(time.ticks_ms(), t_start) / 1000.0
+        def f(x, nd=3):
+            return "" if x is None else ("{:.%df}" % nd).format(x)
+        line = "{},{:.1f},{},{},{},{},{},{},{}".format(
+            cycle, t_s,
+            f(v1 * 1e6, 1), f(r1, 1), f(t1, 4),
+            f(v2 * 1e6, 1), f(r2, 1), f(t2, 4),
+            f(t_amb, 3))
+
         if config.LOG_TO_CONSOLE:
-            t_s = time.ticks_diff(time.ticks_ms(), t_start) / 1000.0
-            def f(x, nd=3):
-                return "" if x is None else ("{:.%df}" % nd).format(x)
-            print("{},{:.1f},{},{},{},{},{},{},{}".format(
-                cycle, t_s,
-                f(v1 * 1e6, 1), f(r1, 1), f(t1, 4),
-                f(v2 * 1e6, 1), f(r2, 1), f(t2, 4),
-                f(t_amb, 3)))
+            print(line)
+
+        if flash and not flash_full:
+            try:
+                flash.write(line + "\n")
+                flash.flush()                      # flush so a reset keeps data
+                if _flash_size() >= config.LOG_MAX_BYTES:
+                    flash_full = True
+                    print("[flash] %s reached %d bytes; stopping flash log."
+                          % (config.LOG_FILENAME, config.LOG_MAX_BYTES))
+            except Exception as e:
+                print("[flash] write error (%s); disabling flash log." % e)
+                flash = None
 
         cycle += 1
 

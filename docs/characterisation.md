@@ -16,6 +16,8 @@ downstream circuit.
   at temperature extremes under non-equilibrium settling were excluded — they
   degraded the fit without representing the operating point.
 
+![Calibration setup: thermistor bead thermally coupled to the UT71B thermocouple in a slowly cooling water bath](calibration/setup.jpg)
+
 ## Model
 
 Two-parameter B-model:
@@ -35,6 +37,8 @@ The two devices are closely matched — B-values within 0.1 %, R₀ within 0.3 %
 which is valuable for a two-channel differential instrument because both
 channels then behave alike and their **difference** (A−B) is especially clean.
 
+![B-model fit residuals vs temperature for both probes over the 10–30 °C window](calibration/residuals.png)
+
 ## Accuracy vs precision
 
 The residual RMS of the fit (~0.1 °C) is the **absolute accuracy** floor, and it
@@ -46,5 +50,6 @@ things and should not be conflated.
 
 ## Files
 
-* `calibration/` — raw (T, R) sweep data and fit spreadsheet (to be added).
+* [`calibration/`](calibration/) — raw (T, R) sweep data, the fit workbook
+  `V2_Thermistor_Measurement.xlsx`, and the residuals plot.
 * Coefficients are entered in [`../firmware/config.py`](../firmware/config.py).

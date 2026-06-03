@@ -10,10 +10,19 @@ where a multimode fibre acts as the nonlinear mixing medium and its refractive
 index (and therefore the computation) is temperature-sensitive. Characterising
 and controlling that thermal environment is what this instrument is for.
 
+The work is part of a BSc Eng (Electrical Engineering) research project at the
+**University of the Witwatersrand**, supervised by **Prof. Mitchell Cox**
+(research title still to be decided).
+
 > **Status:** working two-channel prototype on soldered stripboard. Thermistors
 > characterised; live UI complete; rigorous stability (Allan-deviation)
 > characterisation and the 3D-printed enclosure are in progress. See
 > [Project status](#project-status).
+
+![The Box — two-channel thermistor thermometer](images/system_overview.jpg)
+
+*Pico W + ADS1115 differential front-end and a Pico-LCD-1.14, soldered onto
+stripboard, with both NTC probes on shielded cable.*
 
 ---
 
@@ -99,14 +108,13 @@ the-box-thermometer/
 ├── README.md                 ← this file
 ├── LICENSE
 ├── firmware/                 ← MicroPython for the Pico W
-│   ├── config.py             ← all tunable constants live here
+│   ├── config.py             ← all tunable constants (incl. logging/live MODE)
 │   ├── ads1115.py            ← minimal differential ADS1115 driver
 │   ├── bridge.py             ← bridge maths + B-model / Steinhart-Hart
 │   ├── ds18b20_reader.py     ← optional 1-Wire ambient sensor
+│   ├── lcd_1inch14.py        ← Waveshare Pico-LCD-1.14 driver (bundled)
 │   ├── display.py            ← multi-page LCD UI (joystick-navigated)
-│   ├── main.py               ← measurement loop
-│   ├── test_single.py        ← single-channel bring-up diagnostic
-│   └── test_pmos.py          ← excitation-switch polarity diagnostic
+│   └── main.py               ← measurement loop (USB + flash CSV logging)
 ├── hardware/
 │   ├── schematic_bridge.png  ← bridge + ADC front-end
 │   ├── netlist.md            ← full from-to netlist
@@ -114,9 +122,14 @@ the-box-thermometer/
 ├── docs/
 │   ├── design_notes.md       ← design rationale + noise budget
 │   ├── characterisation.md   ← thermistor calibration write-up
+│   ├── calibration/          ← raw (T,R) sweep, fit spreadsheet, residuals plot
 │   └── build_log.md          ← chronological bring-up / debugging notes
-├── enclosure/
-│   └── README.md             ← 3D-printed cover (STL to be added)
+├── tools/
+│   └── analyse_log.py        ← off-Pico stability / Allan-deviation analysis
+├── enclosure/                ← 3D-printed cover (Fusion 360 + STEP + STL)
+│   ├── cover.f3d
+│   ├── cover.step
+│   └── cover.stl
 ├── data/                     ← logged runs (CSV)
 └── images/                   ← photos, screenshots
 ```
@@ -126,15 +139,20 @@ the-box-thermometer/
 ## Quick start
 
 1. Flash **MicroPython for the Pico W** (`.uf2` from micropython.org).
-2. Copy everything in [`firmware/`](firmware/) to the Pico's root, plus
-   Waveshare's `lcd_1inch14.py` driver (from the Waveshare wiki for the
-   Pico-LCD-1.14).
+2. Copy everything in [`firmware/`](firmware/) to the Pico's root. The Waveshare
+   `lcd_1inch14.py` driver is bundled, so nothing else needs downloading.
 3. Edit [`firmware/config.py`](firmware/config.py): set your measured excitation
-   voltage, resistor values, and thermistor coefficients.
-4. Reset the Pico. `main.py` runs automatically; readings appear on the LCD and
-   as CSV over USB serial.
+   voltage, per-channel resistor values, and thermistor coefficients. Pick a
+   `MODE` — `'logging'` (quiet, ~1 mK, ±0.256 V PGA) or `'live'` (fast and
+   responsive for watching the screen).
+4. Reset the Pico. `main.py` runs automatically; readings appear on the LCD,
+   stream as CSV over USB serial, and — when `LOG_TO_FLASH` is set — are
+   appended to `log.csv` on the Pico's flash so a run survives a USB disconnect.
+5. Pull `log.csv` onto a computer and analyse stability with
+   [`tools/analyse_log.py`](tools/analyse_log.py) (see
+   [Logging & analysis](#logging--analysis)).
 
-Bring-up diagnostics (`test_single.py`, `test_pmos.py`) are documented in
+The chronological bring-up — including the debugging dead-ends — is in
 [`docs/build_log.md`](docs/build_log.md).
 
 ---
@@ -154,6 +172,39 @@ Buttons: **KEY A** cycles backlight (full → dim → off — useful because the
 backlight is a heat source near the sensors); **KEY B** resets statistics;
 **joystick press** toggles a hold/freeze.
 
+<p align="center">
+  <img src="images/lcd_live.jpg"  width="24%" alt="LIVE page">
+  <img src="images/lcd_trend.jpg" width="24%" alt="TREND page">
+  <img src="images/lcd_delta.jpg" width="24%" alt="DELTA page">
+  <img src="images/lcd_stats.jpg" width="24%" alt="STATS page">
+</p>
+
+*The LIVE, TREND, DELTA and STATS pages on the Pico-LCD-1.14.*
+
+---
+
+## Logging & analysis
+
+Each cycle the firmware emits one CSV row — both over USB serial and, when
+`LOG_TO_FLASH` is set, appended to `log.csv` on the Pico's flash. Columns:
+
+```
+cycle, t_s, vdiff1_uv, r1_ohm, t1_c, vdiff2_uv, r2_ohm, t2_c, t_amb_c
+```
+
+Copy `log.csv` onto a computer and run the off-Pico analysis tool:
+
+```
+python tools/analyse_log.py log.csv --settle-min 10
+```
+
+It prints per-channel statistics (mean, σ, peak-to-peak, drift), the
+common-mode-cancelled **A−B** difference channel, and an **overlapping Allan
+deviation** vs averaging time τ. The minimum of the Allan curve is the headline
+number for this project — the best achievable stability and the averaging time
+that reaches it — i.e. the direct answer to *"is 16-bit enough?"*. Requires
+`numpy` and `matplotlib`.
+
 ---
 
 ## Calibration
@@ -170,7 +221,10 @@ T(°C) = B / (ln R − intercept) − 273.15
 | A (NTC-01) | 3816.56 | −1.288504 | ~99.9 kΩ |
 | B (NTC-02) | 3820.82 | −1.306170 | ~99.6 kΩ |
 
-Full method and residuals: [`docs/characterisation.md`](docs/characterisation.md).
+Full method, residuals and the raw sweep data are in
+[`docs/characterisation.md`](docs/characterisation.md) and
+[`docs/calibration/`](docs/calibration/) (fit workbook
+`V2_Thermistor_Measurement.xlsx`).
 
 ---
 
@@ -182,8 +236,9 @@ Full method and residuals: [`docs/characterisation.md`](docs/characterisation.md
 - [x] Thermistor characterisation (B-model)
 - [x] Soldered onto stripboard with RC input filters + star ground
 - [x] Multi-page LCD UI
+- [x] On-Pico flash logging + off-Pico Allan-deviation analysis tool
+- [x] 3D-printed enclosure modelled and printed (fit being refined)
 - [ ] Formal stability / Allan-deviation campaign (breadboard vs soldered)
-- [ ] 3D-printed enclosure (STL)
 - [ ] Decision: is 16-bit sufficient, or move to ADS1220?
 
 ---
@@ -194,7 +249,10 @@ MIT — see [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Built as instrumentation for a photonic reservoir-computing experiment.
-Firmware and circuit developed iteratively on the bench; see
-[`docs/build_log.md`](docs/build_log.md) for the full bring-up story including
-the debugging dead-ends (they're educational).
+Built at the **University of the Witwatersrand** as part of a BSc Eng
+(Electrical Engineering) project supervised by **Prof. Mitchell Cox**, providing
+instrumentation for a photonic reservoir-computing experiment. The 3D-printed
+enclosure was designed by **Matthew Maccelari**. Firmware and circuit were
+developed iteratively on the bench; see
+[`docs/build_log.md`](docs/build_log.md) for the full bring-up story, including
+the debugging dead-ends (they're the educational part).
