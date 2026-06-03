@@ -15,12 +15,14 @@ PIN_SCL      = 1          # GP1 -> ADS1115 SCL
 I2C_FREQ     = 400_000    # 400 kHz standard fast-mode
 ADS_ADDR     = 0x48       # ADDR pin tied to GND -> 0x48
 
-# Input-polarity correction. The bridge inputs were soldered with AINP/AINN
-# swapped (node B on the even pin instead of node A), giving large NEGATIVE
-# Vdiff. These flags negate each channel in software to compensate.
-# Set back to False if you ever rewire the inputs the right way round.
-INVERT_CH1   = True
-INVERT_CH2   = True
+# Input-polarity correction. A warm-the-probe test showed the NTC resistance
+# rising when heated, but it must fall, so the earlier inversion was backwards.
+# The board is in fact wired correctly (node A on AINP, node B on AINN). The
+# static room-temperature match that set these True was a false positive: a
+# plausible resistance sitting on an inverted slope. Flags off give the correct
+# slope. Set True only if the inputs are physically swapped.
+INVERT_CH1   = False
+INVERT_CH2   = False
 
 # -----------------------------------------------------------------------------
 # 2. Pulsed-excitation switch (PMOS high-side)
