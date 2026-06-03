@@ -1,14 +1,15 @@
 # Tools
 
-Off-Pico helpers that run on a normal computer (not on the microcontroller).
+Off-Pico helpers that run on a normal computer rather than on the
+microcontroller.
 
 ## `analyse_log.py`
 
 Stability analysis for the CSV the firmware produces (`log.csv`, or a console
-capture). It reports per-channel statistics, the common-mode-cancelled **A−B**
-difference channel, and the **overlapping Allan deviation** vs averaging time τ
-— the curve whose minimum answers the project's central question, *"is 16-bit
-enough?"*.
+capture). It reports per-channel statistics, the common-mode-cancelled A−B
+difference channel, and the overlapping Allan deviation against averaging time
+τ. The minimum of that curve answers the project's central question, "is 16-bit
+enough?".
 
 ```
 pip install numpy matplotlib

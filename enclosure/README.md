@@ -30,13 +30,13 @@ M3 10mm hole inserts should be sunk into the plastic and M3 20mm bolts can be us
 
 ## Design considerations
 
-- **LCD on the lid**, board inside — keeps the screen visible while the sensors
-  stay enclosed.
+- **LCD on the lid**, board inside, which keeps the screen visible while the
+  sensors stay enclosed.
 - **Backlight heat:** the LCD backlight is the largest local heat source. Keep
   it physically away from the thermistor cable entries, and note the firmware
   can dim/disable the backlight (KEY A) during sensitive runs.
 - **Cable pass-throughs** for the two thermistor leads (audio jacks) and USB.
-- **Non-enclosed reference-resistor cluster** with the warm digital
-  section — thermal gradients across the bridge resistors appear as measurement
-  error.
+- **Non-enclosed reference-resistor cluster** sits with the warm digital
+  section, because thermal gradients across the bridge resistors appear as
+  measurement error.
 - **Female AUX daughter board supports** have been added so that the small boards do not flex. Glue the blocks onto the Veroboard and Prestik them to the top so the boards don't move. A support has been added behind the boards to support the insert force.

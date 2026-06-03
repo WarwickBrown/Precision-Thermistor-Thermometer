@@ -1,11 +1,11 @@
 # Netlist (from-to)
 
 Two-channel differential bridge (Option C), continuous excitation, breakout
-ADS1115, RC input filters, audio-jack thermistor connectors. Each row is a net;
-nets with >2 endpoints span multiple rows.
+ADS1115, RC input filters, and audio-jack thermistor connectors. Each row is a
+net. Nets with more than two endpoints span multiple rows.
 
-> Excitation switch (PMOS) is **not** populated — bridge tops wired directly to
-> the excitation rail. See `docs/design_notes.md` for why.
+> The excitation switch (PMOS) is not populated, so the bridge tops are wired
+> directly to the excitation rail. See `docs/design_notes.md` for why.
 
 ## Power / excitation
 
@@ -40,13 +40,13 @@ nets with >2 endpoints span multiple rows.
 
 | Net | From | To |
 |---|---|---|
-| AIN0 | R_filt1 (1k) | ADS1115 AIN0; C_diff1 one side |
-| AIN1 | R_filt2 (1k) | ADS1115 AIN1; C_diff1 other side |
-| AIN2 | R_filt3 (1k) | ADS1115 AIN2; C_diff2 one side |
-| AIN3 | R_filt4 (1k) | ADS1115 AIN3; C_diff2 other side |
+| AIN0 | R_filt1 (1k) | ADS1115 AIN0, C_diff1 one side |
+| AIN1 | R_filt2 (1k) | ADS1115 AIN1, C_diff1 other side |
+| AIN2 | R_filt3 (1k) | ADS1115 AIN2, C_diff2 one side |
+| AIN3 | R_filt4 (1k) | ADS1115 AIN3, C_diff2 other side |
 
-C_diff (100 nF) across each input pair, at the IC. Optional C_cm (10 nF) from
-each AIN pin to analog GND.
+C_diff (100 nF) goes across each input pair, at the IC. Optional C_cm (10 nF)
+goes from each AIN pin to analog GND.
 
 ## I²C / control
 
@@ -59,13 +59,14 @@ each AIN pin to analog GND.
 
 ## Ground
 
-Star point: single jumper from digital GND strip to analog GND strip at the
-ADS1115 GND pin. Analog strip carries bridge bottoms, jack returns, decoupling
-and filter-cap grounds, ADS1115 GND. Digital strip carries Pico + LCD grounds.
-Pico AGND (pin 33) is the tidy landing point for the analog star.
+Star point: a single jumper from the digital GND strip to the analog GND strip
+at the ADS1115 GND pin. The analog strip carries the bridge bottoms, jack
+returns, decoupling and filter-cap grounds, and the ADS1115 GND. The digital
+strip carries the Pico and LCD grounds. Pico AGND (pin 33) is the tidy landing
+point for the analog star.
 
 ## LCD (Waveshare Pico-LCD-1.14 HAT)
 
-Stacks on the Pico header. Uses GP8–GP13 (SPI + DC/CS/RST/BL), and
-GP2/3/15/16/17/18/20 for joystick + keys. Grounds via the header to the Pico
-ground plane (digital side of the star).
+Stacks on the Pico header. It uses GP8-GP13 (SPI plus DC/CS/RST/BL) and
+GP2/3/15/16/17/18/20 for the joystick and keys. It grounds through the header to
+the Pico ground plane (the digital side of the star).
