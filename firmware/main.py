@@ -197,9 +197,11 @@ def main():
         time.sleep_ms(config.SETTLE_MS)
 
         # --- read both differential channels (averaged) ---
+        # poll=display.tick keeps the buttons and screen responsive during the
+        # read, which in the QUIET profile takes about 4 s.
         try:
-            v1, _ = adc.read_diff_avg(1, prof["n_avg"])
-            v2, _ = adc.read_diff_avg(2, prof["n_avg"])
+            v1, _ = adc.read_diff_avg(1, prof["n_avg"], poll=display.tick)
+            v2, _ = adc.read_diff_avg(2, prof["n_avg"], poll=display.tick)
             consecutive_errs = 0
         except OSError as e:
             bridge_off(pulse)
@@ -227,10 +229,10 @@ def main():
         # --- ambient (result of the conversion we started at top of loop) ---
         t_amb = None
         if ds:
-            # ensure the 750 ms conversion has definitely finished
-            elapsed = time.ticks_diff(time.ticks_ms(), cycle_t0)
-            if elapsed < 800:
-                time.sleep_ms(800 - elapsed)
+            # ensure the 750 ms conversion has finished, polling the UI meanwhile
+            while time.ticks_diff(time.ticks_ms(), cycle_t0) < 800:
+                display.tick()
+                time.sleep_ms(20)
             t_amb = ds.read()
 
         # --- display: push new data, then poll UI during cooldown ---

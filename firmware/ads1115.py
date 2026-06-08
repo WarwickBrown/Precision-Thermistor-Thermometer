@@ -114,14 +114,21 @@ class ADS1115:
             v = -v
         return v
 
-    def read_diff_avg(self, channel, n):
-        """Average n single-shot differential reads. Returns (mean_v, raw_list)."""
+    def read_diff_avg(self, channel, n, poll=None):
+        """Average n single-shot differential reads. Returns (mean_v, raw_list).
+
+        If `poll` is given it is called once after each sample. A long averaged
+        read (about 4 s in the QUIET profile) would otherwise block the main loop
+        and freeze the UI, so the caller passes display.tick here to keep the
+        buttons and screen responsive throughout the measurement."""
         acc = 0.0
         samples = []
         for _ in range(n):
             v = self.read_diff(channel)
             acc += v
             samples.append(v)
+            if poll is not None:
+                poll()
         return acc / n, samples
 
     def near_clip(self, vdiff):
