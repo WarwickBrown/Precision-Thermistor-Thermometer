@@ -274,7 +274,7 @@ def _poll_buttons():
             elif name in ("b", "left"):
                 _page = (_page - 1) % _NPAGES
             elif name == "up":
-                _bl_level = (_bl_level + 1) % 3
+                _bl_level = (_bl_level - 1) % 3      # full -> dim -> off -> full
                 _apply_backlight()
             elif name == "down":
                 _reset_stats()
@@ -342,8 +342,10 @@ def _page_live():
     # cycle count (right-aligned).
     settled = "STABLE" if _is_settled() else "SETTLING"
     _text(settled, 4, 118, GREEN if settled == "STABLE" else AMBER)
+    # ambient sits just right of the settle flag so it always clears the
+    # right-aligned cycle counter, even for a sub-zero ambient and a long run.
     if _last["amb"] is not None:
-        _text("amb{:.1f}C".format(_last["amb"]), 104, 118, GREY)
+        _text("amb{:.1f}C".format(_last["amb"]), 80, 118, GREY)
     cs = "c" + str(_last["cycle"])
     _text(cs, W - len(cs) * 8 - 4, 118, GREY)
     _lcd.show()
@@ -420,9 +422,9 @@ def _plot_series(series_list, colors, x0, y0, x1, y1):
     return lo, hi
 
 
-# A wider left gutter so the axis value labels (up to "+0.123") never run into
-# the plot box.
-_GUT = 50
+# A wider left gutter so the axis value labels never run into the plot box, even
+# a 7-character signed delta like "+12.345" when the two probes are far apart.
+_GUT = 58
 
 
 def _page_trend():
