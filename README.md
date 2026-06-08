@@ -78,7 +78,10 @@ The design decisions and the reasoning behind them are written up in
 | Usable span at PGA = 16 | ≈ ±7 K around bridge balance |
 
 These figures are derived and verified by round-trip simulation in
-[`docs/design_notes.md`](docs/design_notes.md).
+[`docs/design_notes.md`](docs/design_notes.md). The full error budget, which
+separates the theoretical precision (tens of µK) from the reference-limited
+absolute accuracy (about 0.1 °C), is in
+[`docs/error_budget.md`](docs/error_budget.md).
 
 ---
 
@@ -124,6 +127,7 @@ precision-thermistor-thermometer/
 │   └── bom.md                ← bill of materials
 ├── docs/
 │   ├── design_notes.md       ← design rationale + noise budget
+│   ├── error_budget.md       ← theoretical accuracy vs precision, full budget
 │   ├── characterisation.md   ← thermistor calibration write-up
 │   ├── calibration/          ← raw (T,R) sweep, fit spreadsheet, residuals plot
 │   └── build_log.md          ← chronological bring-up / debugging notes
