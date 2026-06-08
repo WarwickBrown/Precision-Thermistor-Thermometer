@@ -1,0 +1,6 @@
+# Host-side tools (run on a normal computer, not the Pico).
+# serial_logger.py needs pyserial. analyse_log.py needs numpy and matplotlib.
+# matplotlib is also used by serial_logger.py --plot.
+pyserial>=3.5
+numpy>=1.20
+matplotlib>=3.4

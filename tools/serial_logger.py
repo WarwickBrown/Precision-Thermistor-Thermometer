@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+# =============================================================================
+# serial_logger.py  --  capture the Pico's CSV stream on the host computer.
+#
+# The firmware already prints one CSV row per cycle over USB serial (and, when
+# LOG_TO_FLASH is set, also to the Pico's own flash). This tool runs on the
+# computer the Pico is plugged into, opens that serial port, echoes the stream
+# to the screen, and saves it to a timestamped .csv file you can then feed to
+# analyse_log.py. With --plot it also shows a live temperature chart.
+#
+# Runs on a normal computer (not the Pico). Needs pyserial (plus matplotlib
+# only if you use --plot):
+#     pip install pyserial matplotlib
+#
+# Usage:
+#     python tools/serial_logger.py                 # auto-detect port, save to data/
+#     python tools/serial_logger.py --port COM5     # pick the port yourself
+#     python tools/serial_logger.py --plot          # also draw a live chart
+#     python tools/serial_logger.py --out run1.csv  # choose the output file
+#     python tools/serial_logger.py --list          # just list serial ports
+# =============================================================================
+import argparse
+import os
+import sys
+import time
+
+# Raspberry Pi USB vendor id, used to spot a Pico when auto-detecting.
+_RPI_VID = 0x2E8A
+_HINTS = ("pico", "micropython", "board in fs mode", "rp2", "usb serial")
+
+
+def _require_pyserial():
+    try:
+        import serial                      # noqa: F401
+        import serial.tools.list_ports     # noqa: F401
+        return serial
+    except ImportError:
+        sys.exit("This tool needs pyserial. Install it with:  pip install pyserial")
+
+
+def list_ports():
+    serial = _require_pyserial()
+    from serial.tools import list_ports as lp
+    ports = list(lp.comports())
+    if not ports:
+        print("No serial ports found.")
+        return ports
+    for p in ports:
+        vid = ("%04x" % p.vid) if p.vid is not None else "----"
+        print("  %-20s vid=%s  %s" % (p.device, vid, p.description))
+    return ports
+
+
+def auto_port():
+    """Best guess at the Pico's serial port, or None."""
+    serial = _require_pyserial()
+    from serial.tools import list_ports as lp
+    cands = list(lp.comports())
+    for p in cands:                                   # prefer a Raspberry Pi VID
+        if p.vid == _RPI_VID:
+            return p.device
+    for p in cands:                                   # then a hint in the name
+        text = ("%s %s" % (p.description or "", p.manufacturer or "")).lower()
+        if any(h in text for h in _HINTS):
+            return p.device
+    if len(cands) == 1:                               # only one port: use it
+        return cands[0].device
+    return None
+
+
+def default_out_path():
+    """data/log_YYYYmmdd_HHMMSS.csv next to the repo if data/ exists, else cwd."""
+    stamp = time.strftime("log_%Y%m%d_%H%M%S.csv")
+    here = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(os.path.dirname(here), "data")
+    if os.path.isdir(data_dir):
+        return os.path.join(data_dir, stamp)
+    return stamp
+
+
+# ---------------------------------------------------------------------------
+# Optional live plot of t1_c / t2_c against t_s. Kept deliberately simple and
+# fully optional, so the capture works even without matplotlib.
+# ---------------------------------------------------------------------------
+class LivePlot:
+    def __init__(self, max_points=3000):
+        import matplotlib.pyplot as plt
+        self.plt = plt
+        self.t, self.a, self.b = [], [], []
+        self.max_points = max_points
+        plt.ion()
+        self.fig, self.ax = plt.subplots(figsize=(9, 4))
+        (self.la,) = self.ax.plot([], [], color="tab:green", lw=0.9, label="A (t1_c)")
+        (self.lb,) = self.ax.plot([], [], color="tab:cyan", lw=0.9, label="B (t2_c)")
+        self.ax.set_xlabel("t_s (s)")
+        self.ax.set_ylabel("temperature (C)")
+        self.ax.legend(loc="best", fontsize=8)
+        self.ax.grid(alpha=0.3)
+        self.fig.tight_layout()
+        self._last_draw = 0.0
+
+    def add(self, t_s, t1, t2):
+        self.t.append(t_s); self.a.append(t1); self.b.append(t2)
+        if len(self.t) > self.max_points:
+            self.t = self.t[-self.max_points:]
+            self.a = self.a[-self.max_points:]
+            self.b = self.b[-self.max_points:]
+
+    def maybe_draw(self):
+        now = time.time()
+        if now - self._last_draw < 0.5:        # throttle redraws to ~2 Hz
+            return
+        self._last_draw = now
+        self.la.set_data(self.t, self.a)
+        self.lb.set_data(self.t, self.b)
+        self.ax.relim(); self.ax.autoscale_view()
+        try:
+            self.fig.canvas.draw_idle()
+            self.fig.canvas.flush_events()
+        except Exception:
+            pass
+
+
+def parse_row(line):
+    """Return (t_s, t1_c, t2_c) from a data line, or None for headers/logs."""
+    parts = line.split(",")
+    if len(parts) < 8:
+        return None
+    try:
+        return float(parts[1]), float(parts[4]), float(parts[7])
+    except ValueError:
+        return None
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Capture the Pico CSV stream to a file.")
+    ap.add_argument("--port", default=None, help="serial port (default: auto-detect)")
+    ap.add_argument("--baud", type=int, default=115200,
+                    help="baud rate (ignored by USB CDC, kept for compatibility)")
+    ap.add_argument("--out", default=None, help="output CSV path (default: timestamped in data/)")
+    ap.add_argument("--no-file", action="store_true", help="echo only, do not save a file")
+    ap.add_argument("--plot", action="store_true", help="show a live temperature chart")
+    ap.add_argument("--list", action="store_true", help="list serial ports and exit")
+    ap.add_argument("--quiet", action="store_true", help="do not echo each line to the screen")
+    args = ap.parse_args()
+
+    if args.list:
+        list_ports()
+        return
+
+    serial = _require_pyserial()
+
+    port = args.port or auto_port()
+    if not port:
+        print("Could not auto-detect the Pico. Available ports:")
+        list_ports()
+        sys.exit("Pass one explicitly with --port.")
+
+    try:
+        ser = serial.Serial(port, args.baud, timeout=1)
+    except Exception as e:
+        sys.exit("Could not open %s (%s)" % (port, e))
+
+    out_path = None
+    fh = None
+    if not args.no_file:
+        out_path = args.out or default_out_path()
+        fh = open(out_path, "a")
+
+    plot = None
+    if args.plot:
+        try:
+            plot = LivePlot()
+        except Exception as e:
+            print("[plot] disabled (%s). Continuing with capture only." % e)
+
+    print("Listening on %s%s. Press Ctrl-C to stop." %
+          (port, "" if not out_path else " -> %s" % out_path))
+
+    nlines = 0
+    try:
+        while True:
+            raw = ser.readline()
+            if not raw:
+                if plot:
+                    plot.maybe_draw()
+                continue
+            line = raw.decode("utf-8", "replace").rstrip("\r\n")
+            if not args.quiet:
+                print(line)
+            if fh:
+                fh.write(line + "\n")
+                fh.flush()
+            nlines += 1
+            if plot:
+                row = parse_row(line)
+                if row:
+                    plot.add(*row)
+                plot.maybe_draw()
+    except KeyboardInterrupt:
+        print("\nStopping.")
+    finally:
+        try:
+            ser.close()
+        except Exception:
+            pass
+        if fh:
+            fh.close()
+            print("Saved %d lines to %s" % (nlines, out_path))
+
+
+if __name__ == "__main__":
+    main()
