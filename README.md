@@ -127,6 +127,7 @@ precision-thermistor-thermometer/
 │   ├── netlist.md            ← full from-to netlist
 │   └── bom.md                ← bill of materials
 ├── docs/
+│   ├── user_manual.md        ← how to run the device (screens, buttons, output)
 │   ├── design_notes.md       ← design rationale + noise budget
 │   ├── error_budget.md       ← theoretical accuracy vs precision, full budget
 │   ├── calibration_procedure.md ← how to calibrate and match the two channels
@@ -176,6 +177,10 @@ The chronological bring-up, including the debugging dead-ends, is in
 ---
 
 ## The display
+
+New to the device? The [user manual](docs/user_manual.md) walks through the
+screens, the buttons, the update cadence, and how to read the data on a
+connected computer.
 
 Five pages, moved through with **KEY A** (next) and **KEY B** (previous). The
 joystick LEFT / RIGHT pages too, as a backup.
