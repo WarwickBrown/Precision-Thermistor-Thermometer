@@ -1,16 +1,19 @@
 # =============================================================================
 # display.py  --  multi-page LCD UI for the Waveshare Pico-LCD-1.14 (240x135).
 #
-# Pages (cycle with joystick LEFT / RIGHT):
-#   0  LIVE     both probes, temperature + resistance + delta + rolling sigma
+# Pages (next / previous with KEY A / KEY B, or joystick RIGHT / LEFT):
+#   0  LIVE     both probes, large temperature + resistance + delta + sigma
 #   1  TREND    scrolling chart of A and B temperature (shared autoscaled axis)
 #   2  DELTA    scrolling chart of A-B (sensitive, common-mode-cancelled)
 #   3  STATS    mean / sigma / min-max span / drift rate, per probe
 #
 # Buttons:
-#   KEY A  (GP15)  cycle backlight  (full -> dim -> off -> full)
-#   KEY B  (GP17)  reset stats / min-max / history
-#   CTRL   (GP3)   hold (freeze) toggle  -- pauses history scroll, marks a point
+#   KEY A  (GP15)   next page
+#   KEY B  (GP17)   previous page
+#   JOY RIGHT/LEFT  next / previous page (backup for KEY A / KEY B)
+#   JOY UP (GP2)    cycle backlight  (full -> dim -> off -> full)
+#   JOY DOWN (GP18) reset stats / min-max / history
+#   JOY PRESS (GP3) hold (freeze) toggle  -- pauses history scroll
 #
 # Self-contained: if Waveshare's `lcd_1inch14.py` driver is not present, the
 # module disables rendering and the rest of the system runs console-only.
@@ -64,7 +67,8 @@ W, H = 240, 135
 
 # ---------------------------------------------------------------------------
 # Scaled text: the framebuf font is fixed 8x8. Render into a temp buffer and
-# blit scaled rectangles for larger, readable numbers.
+# blit scaled rectangles for larger, readable numbers. scale=1 is the native
+# 8x8 font; scale=2 is 16 px tall; scale=3 is 24 px tall.
 # ---------------------------------------------------------------------------
 def _text_scaled(text, x, y, scale, color):
     if not _ok or not _HAVE_FB:
@@ -112,7 +116,12 @@ if _ok:
         from machine import Pin, PWM
         _bl = PWM(Pin(config.PIN_LCD_BL))
         _bl.freq(1000)
-        _bl.duty_u16(65535)
+        if getattr(config, "BACKLIGHT_ON_BOOT", True):
+            _bl_level = 2
+            _bl.duty_u16(65535)
+        else:
+            _bl_level = 0
+            _bl.duty_u16(0)
     except Exception:
         _bl = None
 
@@ -124,6 +133,8 @@ if _ok:
         _btn = {
             "left":  Pin(config.PIN_JOY_LEFT,  Pin.IN, Pin.PULL_UP),
             "right": Pin(config.PIN_JOY_RIGHT, Pin.IN, Pin.PULL_UP),
+            "up":    Pin(config.PIN_JOY_UP,    Pin.IN, Pin.PULL_UP),
+            "down":  Pin(config.PIN_JOY_DOWN,  Pin.IN, Pin.PULL_UP),
             "a":     Pin(config.PIN_KEY_A,     Pin.IN, Pin.PULL_UP),
             "b":     Pin(config.PIN_KEY_B,     Pin.IN, Pin.PULL_UP),
             "ctrl":  Pin(config.PIN_JOY_CTRL,  Pin.IN, Pin.PULL_UP),
@@ -224,14 +235,15 @@ def _poll_buttons():
         val = pin.value()
         if _prev[name] == 1 and val == 0:           # falling edge = press
             _last_btn_ms = now
-            if name == "right":
+            # Page nav on the two physical keys (most reliable) plus joystick L/R.
+            if name in ("a", "right"):
                 _page = (_page + 1) % _NPAGES
-            elif name == "left":
+            elif name in ("b", "left"):
                 _page = (_page - 1) % _NPAGES
-            elif name == "a":
+            elif name == "up":
                 _bl_level = (_bl_level + 1) % 3
                 _apply_backlight()
-            elif name == "b":
+            elif name == "down":
                 _reset_stats()
             elif name == "ctrl":
                 _hold = not _hold
@@ -264,30 +276,42 @@ def _header(title):
     _text(tag, W - 36, 3, BLACK)
 
 
+def _probe_block(label, y_label, t, r):
+    """One probe: small label + integer-ohm resistance on a header line, then a
+    large (scale-3) temperature underneath. y_label is the label-line top."""
+    _text(label, 4, y_label, CYAN)
+    if r is not None:
+        rs = "{:.0f}R".format(r)
+        _text(rs, W - len(rs) * 8 - 4, y_label, GREY)
+    _text_scaled(_fmt(t, 3) + "C", 4, y_label + 10, 3, GREEN)
+
+
 def _page_live():
     _lcd.fill(BLACK)
     _header(config.LABEL_A + "/" + config.LABEL_B + "  LIVE")
 
-    # Probe A
-    _text(config.LABEL_A, 4, 20, CYAN)
-    _text_scaled(_fmt(_last["t1"], 3) + "C", 4, 30, 2, GREEN)
-    _text(_fmt(_last["r1"], 1) + " ohm", 4, 50, GREY)
+    _probe_block(config.LABEL_A, 18, _last["t1"], _last["r1"])   # temp 28..52
+    _probe_block(config.LABEL_B, 58, _last["t2"], _last["r2"])   # temp 68..92
 
-    # Probe B
-    _text(config.LABEL_B, 4, 66, CYAN)
-    _text_scaled(_fmt(_last["t2"], 3) + "C", 4, 76, 2, GREEN)
-    _text(_fmt(_last["r2"], 1) + " ohm", 4, 96, GREY)
-
-    # Delta + sigma + cycle
+    # Bottom status line 1: delta (left) and rolling sigma (right-aligned, so a
+    # large transient sigma grows leftward instead of into the next field).
     d = None
     if _last["t1"] is not None and _last["t2"] is not None:
         d = _last["t1"] - _last["t2"]
-    _text("dT " + ("{:+.3f}C".format(d) if d is not None else "--"), 4, 112, AMBER)
-
+    _text("dT" + ("{:+.3f}C".format(d) if d is not None else " --"), 4, 100, AMBER)
     _, s1 = _stats(_t1, n=config.STATS_WINDOW)
     sig = "--" if s1 is None else "{:.1f}".format(s1 * 1000.0)
-    _text("sig " + sig + "mK", 120, 112, WHITE)
-    _text("c" + str(_last["cycle"]), 190, 112, GREY)
+    sigs = "sig" + sig + "mK"
+    _text(sigs, W - len(sigs) * 8 - 4, 100, WHITE)
+
+    # Bottom status line 2: settle flag (left), ambient (if a DS18B20 is fitted),
+    # cycle count (right-aligned).
+    settled = "STABLE" if _is_settled() else "SETTLING"
+    _text(settled, 4, 118, GREEN if settled == "STABLE" else AMBER)
+    if _last["amb"] is not None:
+        _text("amb{:.1f}C".format(_last["amb"]), 104, 118, GREY)
+    cs = "c" + str(_last["cycle"])
+    _text(cs, W - len(cs) * 8 - 4, 118, GREY)
     _lcd.show()
 
 
@@ -329,15 +353,20 @@ def _plot_series(series_list, colors, x0, y0, x1, y1):
     return lo, hi
 
 
+# A wider left gutter so the axis value labels (up to "+0.123") never run into
+# the plot box.
+_GUT = 50
+
+
 def _page_trend():
     _lcd.fill(BLACK)
     _header("TREND  A=grn B=cyn")
-    x0, y0, x1, y1 = 28, 16, W - 2, H - 14
+    x0, y0, x1, y1 = _GUT, 16, W - 2, H - 14
     _plot_axes(x0, y0, x1, y1)
     lo, hi = _plot_series([_t1, _t2], [GREEN, CYAN], x0, y0, x1, y1)
     if lo is not None:
-        _text("{:.2f}".format(hi), 0, y0, GREY)
-        _text("{:.2f}".format(lo), 0, y1 - 8, GREY)
+        _text("{:.2f}".format(hi), 2, y0, GREY)
+        _text("{:.2f}".format(lo), 2, y1 - 8, GREY)
     span_min = (len(_t1) * config.CYCLE_PERIOD_S) / 60.0
     _text("{:.0f}min".format(span_min), x0 + 4, H - 12, GREY)
     _lcd.show()
@@ -346,12 +375,12 @@ def _page_trend():
 def _page_delta():
     _lcd.fill(BLACK)
     _header("DELTA  A-B")
-    x0, y0, x1, y1 = 28, 16, W - 2, H - 14
+    x0, y0, x1, y1 = _GUT, 16, W - 2, H - 14
     _plot_axes(x0, y0, x1, y1)
     lo, hi = _plot_series([_dt], [AMBER], x0, y0, x1, y1)
     if lo is not None:
-        _text("{:+.3f}".format(hi), 0, y0, GREY)
-        _text("{:+.3f}".format(lo), 0, y1 - 8, GREY)
+        _text("{:+.3f}".format(hi), 2, y0, GREY)
+        _text("{:+.3f}".format(lo), 2, y1 - 8, GREY)
         m, s = _stats(_dt, n=config.STATS_WINDOW)
         if s is not None:
             _text("sd {:.1f}mK".format(s * 1000.0), x0 + 4, H - 12, WHITE)
@@ -360,32 +389,31 @@ def _page_delta():
 
 def _page_stats():
     _lcd.fill(BLACK)
-    _header("STATS  (KEY B = reset)")
+    _header("STATS")
     win = config.STATS_WINDOW
 
-    def row(y, label, buf, key, nd=3, unit="C"):
+    def row(y, label, buf, key):
         m, s = _stats(buf, n=win)
         _text(label, 4, y, CYAN)
-        _text("u:" + _fmt(m, nd), 56, y, WHITE)
+        _text("u" + _fmt(m, 3), 40, y, WHITE)
         sig = "--" if s is None else "{:.1f}".format(s * 1000.0)
-        _text("s:" + sig + "mK", 150, y, GREEN)
-        # span on next line
+        _text("s" + sig + "mK", 150, y, GREEN)
+        # span + drift on the next line, abbreviated so the whole line fits 240 px
         sp = "--"
         if _mins[key] is not None and _maxs[key] is not None:
-            sp = "{:.1f}mK".format((_maxs[key] - _mins[key]) * 1000.0)
+            sp = "{:.1f}".format((_maxs[key] - _mins[key]) * 1000.0)
         dr = _drift_rate(buf)
         drs = "--" if dr is None else "{:+.1f}".format(dr)
-        _text("  span:" + sp + " drift:" + drs + "mK/min", 4, y + 10, GREY)
+        _text("sp" + sp + "mK  dr" + drs + "mK/m", 16, y + 10, GREY)
 
-    row(20, config.LABEL_A, _t1, "t1")
-    row(46, config.LABEL_B, _t2, "t2")
-    row(72, "dT", _dt, "dt")
+    row(18, config.LABEL_A, _t1, "t1")
+    row(42, config.LABEL_B, _t2, "t2")
+    row(66, "dT", _dt, "dt")
 
     n = len([v for v in _t1 if v is not None])
-    _text("n=%d  win=%d  %.0fs/smpl" % (n, win, config.CYCLE_PERIOD_S),
-          4, 104, GREY)
+    _text("n%d win%d %.0fs/smp" % (n, win, config.CYCLE_PERIOD_S), 4, 92, GREY)
     settled = "STABLE" if _is_settled() else "SETTLING"
-    _text(settled, 4, 118, GREEN if settled == "STABLE" else AMBER)
+    _text_scaled(settled, 4, 108, 2, GREEN if settled == "STABLE" else AMBER)
     _lcd.show()
 
 
