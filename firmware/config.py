@@ -153,8 +153,12 @@ CH2_T_OFFSET = 0.0
 #
 #   QUIET : quiet, full-resolution logging profile (the ~1 mK setup):
 #           16 averages, 8 SPS, PGA +-0.256 V, 5 s cycle.
-#   FAST  : fast, responsive real-time profile for watching the screen:
-#           4 averages, 32 SPS, PGA +-2.048 V, 1 s cycle.
+#   FAST  : fast, near real-time profile for watching the screen:
+#           4 averages, 475 SPS, PGA +-2.048 V, 0.2 s cycle (about 5 Hz).
+#
+#   Each profile also sets its own settle wait. FAST uses a short one because the
+#   bridge runs on continuous excitation and is always settled. To go faster
+#   still, lower the FAST period_s toward about 0.1 (10 Hz) and/or drop n_avg.
 #
 #   PGA note: +-0.256 V gives 0.21 mK/LSB but only spans ~+-7 K around bridge
 #   balance. The FAST profile widens the PGA to +-2.048 V so a fast-changing or
@@ -162,11 +166,11 @@ CH2_T_OFFSET = 0.0
 # -----------------------------------------------------------------------------
 MODE = 'logging'           # boot profile: 'logging' (QUIET) or 'live' (FAST)
 
-PROFILE_QUIET = {"name": "QUIET", "n_avg": 16, "datarate": 8,  "fsr": 0.256, "period_s": 5.0}
-PROFILE_FAST  = {"name": "FAST",  "n_avg": 4,  "datarate": 32, "fsr": 2.048, "period_s": 1.0}
+PROFILE_QUIET = {"name": "QUIET", "n_avg": 16, "datarate": 8,   "fsr": 0.256, "period_s": 5.0, "settle_ms": 50}
+PROFILE_FAST  = {"name": "FAST",  "n_avg": 4,  "datarate": 475, "fsr": 2.048, "period_s": 0.2, "settle_ms": 10}
 
 # Flat names derived from the boot profile. Kept so code that reads config.N_AVG
-# etc. still works; runtime switching happens through sampling.py.
+# etc. still works. Runtime switching happens through sampling.py.
 _BOOT = PROFILE_FAST if MODE == 'live' else PROFILE_QUIET
 N_AVG          = _BOOT["n_avg"]
 ADS_DATARATE   = _BOOT["datarate"]

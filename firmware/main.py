@@ -192,9 +192,9 @@ def main():
         if ds:
             ds.start()
 
-        # --- energise bridge and let it settle ---
+        # --- energise bridge and let it settle (per-profile settle wait) ---
         bridge_on(pulse)
-        time.sleep_ms(config.SETTLE_MS)
+        time.sleep_ms(prof.get("settle_ms", config.SETTLE_MS))
 
         # --- read both differential channels (averaged) ---
         # poll=display.tick keeps the buttons and screen responsive during the
@@ -242,7 +242,7 @@ def main():
         t_s = time.ticks_diff(time.ticks_ms(), t_start) / 1000.0
         def f(x, nd=3):
             return "" if x is None else ("{:.%df}" % nd).format(x)
-        line = "{},{:.1f},{},{},{},{},{},{},{}".format(
+        line = "{},{:.2f},{},{},{},{},{},{},{}".format(
             cycle, t_s,
             f(v1 * 1e6, 1), f(r1, 1), f(t1, 4),
             f(v2 * 1e6, 1), f(r2, 1), f(t2, 4),
