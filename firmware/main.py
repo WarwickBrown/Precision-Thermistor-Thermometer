@@ -79,7 +79,8 @@ def build_channels():
         _pick(config.CH1_R_B,   config.R_B),
         model=config.TEMP_MODEL,
         b_val=config.CH1_B_VAL, intercept=config.CH1_INTERCEPT,
-        sh_a=config.CH1_SH_A, sh_b=config.CH1_SH_B, sh_c=config.CH1_SH_C)
+        sh_a=config.CH1_SH_A, sh_b=config.CH1_SH_B, sh_c=config.CH1_SH_C,
+        t_offset=config.CH1_T_OFFSET)
     ch2 = Channel(
         "CH2", config.V_EXC,
         _pick(config.CH2_R_TOP, config.R_TOP),
@@ -87,7 +88,8 @@ def build_channels():
         _pick(config.CH2_R_B,   config.R_B),
         model=config.TEMP_MODEL,
         b_val=config.CH2_B_VAL, intercept=config.CH2_INTERCEPT,
-        sh_a=config.CH2_SH_A, sh_b=config.CH2_SH_B, sh_c=config.CH2_SH_C)
+        sh_a=config.CH2_SH_A, sh_b=config.CH2_SH_B, sh_c=config.CH2_SH_C,
+        t_offset=config.CH2_T_OFFSET)
     return ch1, ch2
 
 

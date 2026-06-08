@@ -59,7 +59,8 @@ class Channel:
     def __init__(self, name, v_exc, r_top, r_a, r_b,
                  model='bmodel',
                  b_val=None, intercept=None,
-                 sh_a=None, sh_b=None, sh_c=None):
+                 sh_a=None, sh_b=None, sh_c=None,
+                 t_offset=0.0):
         self.name = name
         self.v_exc = v_exc
         self.r_top = r_top
@@ -71,6 +72,7 @@ class Channel:
         self.sh_a = sh_a
         self.sh_b = sh_b
         self.sh_c = sh_c
+        self.t_offset = t_offset      # per-channel matching trim (deg C)
 
     def convert(self, vdiff):
         """Return (resistance_ohms, temperature_C)."""
@@ -80,4 +82,6 @@ class Channel:
             t = steinhart_hart(r, self.sh_a, self.sh_b, self.sh_c)
         else:
             t = b_model(r, self.b_val, self.intercept)
+        if t is not None:
+            t += self.t_offset
         return r, t
