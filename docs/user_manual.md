@@ -23,12 +23,12 @@ This is the thing that trips people up. The instrument takes one full reading pe
 | Profile | Cycle | What it is for |
 |---|---|---|
 | **QUIET** | about every 5 seconds | the quiet, roughly 1 mK logging setup |
-| **FAST** | about every 1 second | watching the screen and fast changes |
+| **FAST** | about 5 times a second (5 Hz) | watching the screen in near real time |
 
 So in QUIET the readings update only every 5 seconds or so. Between cycles the
 last reading simply stays on screen. That is normal, not a frozen device. If you
-want the numbers to move quickly, switch to FAST (long-press the joystick, see
-below) and a red **FAST** badge appears in the top right.
+want the numbers to move in near real time, switch to FAST (long-press the
+joystick, see below) and a red **FAST** badge appears in the top right.
 
 The buttons themselves respond immediately, during a measurement as well as
 between them. The page also redraws the moment you press a button.
@@ -81,6 +81,12 @@ The columns are:
 ```
 cycle, t_s, vdiff1_uv, r1_ohm, t1_c, vdiff2_uv, r2_ohm, t2_c, t_amb_c
 ```
+
+`t_s` is seconds since the firmware started, which is fine for lining things up
+within one run. For an absolute time you can match to other data you take, use
+`serial_logger.py`: it appends a `host_time` column (your computer's wall-clock
+time, to the millisecond) as the last field of every row. The Pico has no clock
+of its own, so this host stamp is the reliable way to get absolute time.
 
 Three ways to see it, easiest first:
 

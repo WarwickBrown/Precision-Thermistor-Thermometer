@@ -218,11 +218,12 @@ shows in the header when the fast profile is active.
 | Profile | Averages | Rate | PGA | Cycle | For |
 |---|---|---|---|---|---|
 | **QUIET** | 16 | 8 SPS | ±0.256 V | 5 s | the quiet, roughly 1 mK logging setup |
-| **FAST** | 4 | 32 SPS | ±2.048 V | 1 s | watching the screen and fast transients |
+| **FAST** | 4 | 475 SPS | ±2.048 V | 0.2 s (≈5 Hz) | watching the screen in near real time |
 
 `config.MODE` chooses which one is active at boot. Both profiles are defined in
-[`firmware/config.py`](firmware/config.py), so the averages, rate, range, and
-cycle time of either can be tuned there.
+[`firmware/config.py`](firmware/config.py), so the averages, rate, range, cycle
+time, and settle wait of either can be tuned there. To go faster than 5 Hz, lower
+the FAST `period_s` toward about 0.1.
 
 ---
 
@@ -238,7 +239,8 @@ cycle, t_s, vdiff1_uv, r1_ohm, t1_c, vdiff2_uv, r2_ohm, t2_c, t_amb_c
 
 The serial stream is the easy way to capture a run straight onto the connected
 computer in real time. `serial_logger.py` auto-detects the Pico's port, saves a
-timestamped file under `data/`, and can draw a live chart:
+timestamped file under `data/`, appends a `host_time` wall-clock column to each
+row so the data lines up with other measurements, and can draw a live chart:
 
 ```
 python tools/serial_logger.py            # capture to data/, echo to screen

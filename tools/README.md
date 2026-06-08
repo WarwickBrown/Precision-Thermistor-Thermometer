@@ -12,8 +12,10 @@ pip install -r tools/requirements.txt
 Captures the CSV the firmware streams over USB serial straight onto the host
 computer. It auto-detects the Pico's serial port, echoes the stream to the
 screen, and saves it to a timestamped file in `data/` that you can then feed to
-`analyse_log.py`. With `--plot` it also draws a live temperature chart. Needs
-`pyserial` (and `matplotlib` only for `--plot`).
+`analyse_log.py`. Each row gets a `host_time` wall-clock column appended (last
+field) so the data can be matched to other measurements taken on the same
+computer. With `--plot` it also draws a live temperature chart. Needs `pyserial`
+(and `matplotlib` only for `--plot`).
 
 ```
 python tools/serial_logger.py                 # auto-detect port, save to data/
@@ -22,7 +24,11 @@ python tools/serial_logger.py --port COM5     # choose the port yourself
 python tools/serial_logger.py --plot          # also draw a live chart
 python tools/serial_logger.py --out run1.csv  # choose the output file
 python tools/serial_logger.py --no-file       # echo only, do not save
+python tools/serial_logger.py --no-timestamp  # do not append host_time
 ```
+
+The appended `host_time` column does not disturb `analyse_log.py`, which reads
+only the fixed firmware columns and ignores the extra field.
 
 This complements the on-Pico flash log. The flash log survives a USB
 disconnect, while the serial capture is the easy way to pull a long run onto the
