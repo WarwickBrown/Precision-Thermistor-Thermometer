@@ -3,17 +3,18 @@
 #
 # Pages (next / previous with KEY A / KEY B, or joystick RIGHT / LEFT):
 #   0  LIVE     both probes, large temperature + resistance + delta + sigma
-#   1  TREND    scrolling chart of A and B temperature (shared autoscaled axis)
-#   2  DELTA    scrolling chart of A-B (sensitive, common-mode-cancelled)
-#   3  STATS    mean / sigma / min-max span / drift rate, per probe
+#   1  AVERAGES rolling mean over a short and a long window, per probe
+#   2  TREND    scrolling chart of A and B temperature (shared autoscaled axis)
+#   3  DELTA    scrolling chart of A-B (sensitive, common-mode-cancelled)
+#   4  STATS    mean / sigma / min-max span / drift rate, per probe
 #
 # Buttons:
-#   KEY A  (GP15)   next page
-#   KEY B  (GP17)   previous page
-#   JOY RIGHT/LEFT  next / previous page (backup for KEY A / KEY B)
-#   JOY UP (GP2)    cycle backlight  (full -> dim -> off -> full)
-#   JOY DOWN (GP18) reset stats / min-max / history
-#   JOY PRESS (GP3) hold (freeze) toggle  -- pauses history scroll
+#   KEY A  (GP15)        next page
+#   KEY B  (GP17)        previous page
+#   JOY RIGHT/LEFT       next / previous page (backup for KEY A / KEY B)
+#   JOY UP (GP2)         cycle backlight  (full -> dim -> off -> full)
+#   JOY DOWN (GP18)      reset stats / min-max / history
+#   JOY PRESS (GP3)      tap = hold (freeze) toggle, long-press = FAST/QUIET
 #
 # Self-contained: if Waveshare's `lcd_1inch14.py` driver is not present, the
 # module disables rendering and the rest of the system runs console-only.
@@ -24,6 +25,7 @@
 # =============================================================================
 import time
 import config
+import sampling
 
 try:
     import framebuf
@@ -104,7 +106,7 @@ _mins = {"t1": None, "t2": None, "dt": None}
 _maxs = {"t1": None, "t2": None, "dt": None}
 
 _page = 0
-_NPAGES = 4
+_NPAGES = 5
 _hold = False
 _bl_level = 2          # 0 off, 1 dim, 2 full
 _dirty = True          # needs redraw
@@ -144,6 +146,11 @@ if _ok:
 
 _prev = {k: 1 for k in _btn}     # previous (released) states
 _last_btn_ms = 0
+
+# Joystick-centre long-press state (tap = hold toggle, hold = FAST/QUIET switch)
+_LONG_MS = 700
+_ctrl_down_ms = None
+_ctrl_fired_long = False
 
 
 def available():
@@ -215,7 +222,7 @@ def _drift_rate(buf):
     if len(vals) < 2:
         return None
     span_samples = len(vals) - 1
-    minutes = span_samples * config.CYCLE_PERIOD_S / 60.0
+    minutes = span_samples * sampling.period_s() / 60.0
     if minutes <= 0:
         return None
     return (vals[-1] - vals[0]) * 1000.0 / minutes
@@ -226,14 +233,40 @@ def _drift_rate(buf):
 # ---------------------------------------------------------------------------
 def _poll_buttons():
     global _page, _hold, _bl_level, _last_btn_ms
+    global _ctrl_down_ms, _ctrl_fired_long
     if not _btn:
         return
     now = time.ticks_ms()
-    if time.ticks_diff(now, _last_btn_ms) < 180:    # debounce / repeat guard
+
+    # Joystick centre, handled every tick (outside the discrete-press debounce)
+    # so the press duration can be measured: a tap toggles hold, a long press
+    # switches the FAST/QUIET sampling profile.
+    cpin = _btn.get("ctrl")
+    if cpin is not None:
+        cval = cpin.value()
+        if _prev["ctrl"] == 1 and cval == 0:                # pressed
+            _ctrl_down_ms = now
+            _ctrl_fired_long = False
+        elif cval == 0 and _ctrl_down_ms is not None and not _ctrl_fired_long:
+            if time.ticks_diff(now, _ctrl_down_ms) >= _LONG_MS:
+                _ctrl_fired_long = True                     # long-press fires once
+                sampling.toggle()
+                _dirty_set()
+        elif _prev["ctrl"] == 0 and cval == 1:              # released
+            if _ctrl_down_ms is not None and not _ctrl_fired_long:
+                _hold = not _hold                           # short tap
+                _dirty_set()
+            _ctrl_down_ms = None
+        _prev["ctrl"] = cval
+
+    # Discrete-press buttons: act on the falling edge, with a shared debounce.
+    if time.ticks_diff(now, _last_btn_ms) < 180:
         return
     for name, pin in _btn.items():
+        if name == "ctrl":
+            continue
         val = pin.value()
-        if _prev[name] == 1 and val == 0:           # falling edge = press
+        if _prev[name] == 1 and val == 0:                   # falling edge = press
             _last_btn_ms = now
             # Page nav on the two physical keys (most reliable) plus joystick L/R.
             if name in ("a", "right"):
@@ -245,8 +278,6 @@ def _poll_buttons():
                 _apply_backlight()
             elif name == "down":
                 _reset_stats()
-            elif name == "ctrl":
-                _hold = not _hold
             _dirty_set()
         _prev[name] = val
 
@@ -271,9 +302,12 @@ def _fmt(v, nd=3):
 def _header(title):
     _lcd.fill_rect(0, 0, W, 14, BLUE)
     _text(title, 4, 3, BLACK)
-    # hold + page indicators on the right
+    # Right side, right-aligned: HOLD-or-page tag, with a FAST badge to its left.
+    rx = W - 4
     tag = "HOLD" if _hold else "P%d" % (_page + 1)
-    _text(tag, W - 36, 3, BLACK)
+    _text(tag, rx - len(tag) * 8, 3, BLACK)
+    if sampling.is_fast():
+        _text("FAST", rx - len(tag) * 8 - 4 - 32, 3, RED)
 
 
 def _probe_block(label, y_label, t, r):
@@ -312,6 +346,39 @@ def _page_live():
         _text("amb{:.1f}C".format(_last["amb"]), 104, 118, GREY)
     cs = "c" + str(_last["cycle"])
     _text(cs, W - len(cs) * 8 - 4, 118, GREY)
+    _lcd.show()
+
+
+def _page_averages():
+    _lcd.fill(BLACK)
+    _header("AVERAGES")
+    win = config.STATS_WINDOW
+
+    def block(y, label, buf):
+        ms, _ss = _stats(buf, n=win)            # short-window mean
+        ml, sl = _stats(buf, n=None)            # long-window (all available) mean + sigma
+        _text(label, 4, y, CYAN)
+        sls = "--" if sl is None else "{:.1f}".format(sl * 1000.0)
+        rt = "sd" + sls + "mK"
+        _text(rt, W - len(rt) * 8 - 4, y, GREEN)              # long-window sigma, right
+        _text_scaled(_fmt(ml, 4) + "C", 4, y + 10, 2, WHITE)  # big long-window mean
+        sms = "--" if ms is None else "{:.4f}".format(ms)
+        _text("n%d %s" % (win, sms), 4, y + 28, GREY)         # short-window mean, small
+
+    block(16, config.LABEL_A, _t1)     # label 16, big 26..42, small 44..52
+    block(54, config.LABEL_B, _t2)     # label 54, big 64..80, small 82..90
+
+    # dT: signed long-window mean and its sigma
+    md, sd = _stats(_dt, n=None)
+    _text("dT", 4, 96, AMBER)
+    _text(("{:+.4f}C".format(md) if md is not None else "--.----C"), 40, 96, AMBER)
+    sds = "--" if sd is None else "{:.1f}".format(sd * 1000.0)
+    rt = "sd" + sds + "mK"
+    _text(rt, W - len(rt) * 8 - 4, 96, WHITE)
+
+    nshow = len([v for v in _t1 if v is not None])
+    _text("n%d  win %d/all smp  %.0fs" % (nshow, win, sampling.period_s()),
+          4, 116, GREY)
     _lcd.show()
 
 
@@ -367,7 +434,7 @@ def _page_trend():
     if lo is not None:
         _text("{:.2f}".format(hi), 2, y0, GREY)
         _text("{:.2f}".format(lo), 2, y1 - 8, GREY)
-    span_min = (len(_t1) * config.CYCLE_PERIOD_S) / 60.0
+    span_min = (len(_t1) * sampling.period_s()) / 60.0
     _text("{:.0f}min".format(span_min), x0 + 4, H - 12, GREY)
     _lcd.show()
 
@@ -411,7 +478,7 @@ def _page_stats():
     row(66, "dT", _dt, "dt")
 
     n = len([v for v in _t1 if v is not None])
-    _text("n%d win%d %.0fs/smp" % (n, win, config.CYCLE_PERIOD_S), 4, 92, GREY)
+    _text("n%d win%d %.0fs/smp" % (n, win, sampling.period_s()), 4, 92, GREY)
     settled = "STABLE" if _is_settled() else "SETTLING"
     _text_scaled(settled, 4, 108, 2, GREEN if settled == "STABLE" else AMBER)
     _lcd.show()
@@ -434,7 +501,8 @@ def tick():
         return
     _dirty = False
     try:
-        (_page_live, _page_trend, _page_delta, _page_stats)[_page]()
+        (_page_live, _page_averages, _page_trend, _page_delta,
+         _page_stats)[_page]()
     except Exception as e:
         print("[display] render error:", e)
 

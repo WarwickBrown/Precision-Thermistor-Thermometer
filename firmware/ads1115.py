@@ -68,6 +68,20 @@ class ADS1115:
         self._lsb = (2.0 * fsr) / 65536.0   # volts per LSB (differential)
         self._conv_ms = _CONV_MS[datarate]
 
+    def reconfigure(self, fsr=None, datarate=None):
+        """Change PGA full-scale range and/or data rate at runtime. Used by the
+        live QUIET/FAST sampling-profile switch."""
+        if fsr is not None:
+            if fsr not in _PGA:
+                raise ValueError("Unsupported FSR %s" % fsr)
+            self.fsr = fsr
+            self._lsb = (2.0 * fsr) / 65536.0
+        if datarate is not None:
+            if datarate not in _DR:
+                raise ValueError("Unsupported data rate %s" % datarate)
+            self.datarate = datarate
+            self._conv_ms = _CONV_MS[datarate]
+
     def _write_config(self, cfg):
         self.i2c.writeto_mem(self.addr, _REG_CONFIG,
                              bytes([(cfg >> 8) & 0xFF, cfg & 0xFF]))

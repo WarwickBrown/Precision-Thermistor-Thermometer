@@ -16,6 +16,7 @@ import config
 from ads1115 import ADS1115
 from bridge import Channel
 import display
+import sampling
 
 # Optional DS18B20
 ds = None
@@ -127,8 +128,9 @@ def main():
         time.sleep(1)
     print("[i2c] ADS1115 found.")
 
+    active_prof = sampling.current()
     adc = ADS1115(i2c, addr=config.ADS_ADDR,
-                  fsr=config.ADS_FSR, datarate=config.ADS_DATARATE)
+                  fsr=active_prof["fsr"], datarate=active_prof["datarate"])
     adc.invert_ch1 = config.INVERT_CH1
     adc.invert_ch2 = config.INVERT_CH2
 
@@ -172,6 +174,18 @@ def main():
     while True:
         cycle_t0 = time.ticks_ms()
 
+        # --- apply a live QUIET/FAST profile switch requested from the display ---
+        prof = sampling.current()
+        if prof is not active_prof:
+            try:
+                adc.reconfigure(fsr=prof["fsr"], datarate=prof["datarate"])
+                active_prof = prof
+                print("[mode] %s: %d avg, %d SPS, +-%.3f V, %.1f s cycle"
+                      % (prof["name"], prof["n_avg"], prof["datarate"],
+                         prof["fsr"], prof["period_s"]))
+            except OSError as e:
+                print("[mode] reconfigure failed (%s); keeping previous." % e)
+
         # Kick off DS18B20 conversion early so its 750 ms overlaps our work.
         if ds:
             ds.start()
@@ -182,8 +196,8 @@ def main():
 
         # --- read both differential channels (averaged) ---
         try:
-            v1, _ = adc.read_diff_avg(1, config.N_AVG)
-            v2, _ = adc.read_diff_avg(2, config.N_AVG)
+            v1, _ = adc.read_diff_avg(1, prof["n_avg"])
+            v2, _ = adc.read_diff_avg(2, prof["n_avg"])
             consecutive_errs = 0
         except OSError as e:
             bridge_off(pulse)
@@ -248,7 +262,7 @@ def main():
         cycle += 1
 
         # --- responsive cooldown: poll joystick / redraw ~25 Hz until next cycle ---
-        deadline = time.ticks_add(cycle_t0, int(config.CYCLE_PERIOD_S * 1000))
+        deadline = time.ticks_add(cycle_t0, int(prof["period_s"] * 1000))
         while time.ticks_diff(deadline, time.ticks_ms()) > 0:
             display.tick()
             time.sleep_ms(40)

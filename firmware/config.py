@@ -136,32 +136,33 @@ CH2_SH_B = 0.0001953817084
 CH2_SH_C = 0.0000001702921204
 
 # -----------------------------------------------------------------------------
-# 7. Sampling / averaging
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# 7. Sampling / averaging  --  driven by MODE
+# 7. Sampling / averaging  --  two switchable profiles
 #
-#   MODE = 'logging' -> quiet, full-resolution profile (the ~1 mK setup):
-#                       16 averages, 8 SPS, PGA +-0.256 V, 5 s cycle.
-#   MODE = 'live'    -> fast/responsive profile for watching the screen:
-#                       4 averages, 32 SPS, PGA +-2.048 V, 1 s cycle.
+#   The instrument carries two sampling profiles and can switch between them at
+#   runtime without a reflash (long-press the joystick button). MODE picks which
+#   profile is active at boot. Tune either profile below.
+#
+#   QUIET : quiet, full-resolution logging profile (the ~1 mK setup):
+#           16 averages, 8 SPS, PGA +-0.256 V, 5 s cycle.
+#   FAST  : fast, responsive real-time profile for watching the screen:
+#           4 averages, 32 SPS, PGA +-2.048 V, 1 s cycle.
 #
 #   PGA note: +-0.256 V gives 0.21 mK/LSB but only spans ~+-7 K around bridge
-#   balance. Use it once readings sit near balance (they do at room temp). If a
-#   channel CLIPS at startup, raise ADS_FSR or switch MODE to 'live'.
+#   balance. The FAST profile widens the PGA to +-2.048 V so a fast-changing or
+#   off-balance probe cannot clip, at the cost of resolution.
 # -----------------------------------------------------------------------------
-MODE = 'logging'           # 'logging' (quiet, 1 mK) or 'live' (fast)
+MODE = 'logging'           # boot profile: 'logging' (QUIET) or 'live' (FAST)
 
-if MODE == 'live':
-    N_AVG          = 4
-    ADS_DATARATE   = 32
-    ADS_FSR        = 2.048
-    CYCLE_PERIOD_S = 1.0
-else:  # 'logging'
-    N_AVG          = 16
-    ADS_DATARATE   = 8
-    ADS_FSR        = 0.256
-    CYCLE_PERIOD_S = 5.0
+PROFILE_QUIET = {"name": "QUIET", "n_avg": 16, "datarate": 8,  "fsr": 0.256, "period_s": 5.0}
+PROFILE_FAST  = {"name": "FAST",  "n_avg": 4,  "datarate": 32, "fsr": 2.048, "period_s": 1.0}
+
+# Flat names derived from the boot profile. Kept so code that reads config.N_AVG
+# etc. still works; runtime switching happens through sampling.py.
+_BOOT = PROFILE_FAST if MODE == 'live' else PROFILE_QUIET
+N_AVG          = _BOOT["n_avg"]
+ADS_DATARATE   = _BOOT["datarate"]
+ADS_FSR        = _BOOT["fsr"]
+CYCLE_PERIOD_S = _BOOT["period_s"]
 
 # -----------------------------------------------------------------------------
 # 8. Logging
