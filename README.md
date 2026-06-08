@@ -129,6 +129,7 @@ precision-thermistor-thermometer/
 ├── docs/
 │   ├── design_notes.md       ← design rationale + noise budget
 │   ├── error_budget.md       ← theoretical accuracy vs precision, full budget
+│   ├── calibration_procedure.md ← how to calibrate and match the two channels
 │   ├── characterisation.md   ← thermistor calibration write-up
 │   ├── calibration/          ← raw (T,R) sweep, fit spreadsheet, residuals plot
 │   └── build_log.md          ← chronological bring-up / debugging notes
@@ -150,7 +151,11 @@ precision-thermistor-thermometer/
 
 1. Flash MicroPython for the Pico W (the `.uf2` from micropython.org).
 2. Copy everything in [`firmware/`](firmware/) to the Pico's root. The Waveshare
-   `lcd_1inch14.py` driver is bundled, so nothing else needs downloading.
+   `lcd_1inch14.py` driver is bundled, so nothing else needs downloading. Thonny
+   works, but `mpremote` copies the whole folder in one go
+   (`mpremote connect auto cp firmware/*.py :` then `mpremote reset`), and
+   `mpremote mount firmware` runs the code straight off your computer while you
+   develop, with no copying.
 3. Edit [`firmware/config.py`](firmware/config.py): set your measured excitation
    voltage, per-channel resistor values, and thermistor coefficients. Choose a
    boot `MODE`. `'logging'` starts in the quiet, roughly 1 mK QUIET profile and
@@ -265,7 +270,14 @@ T(°C) = B / (ln R − intercept) − 273.15
 | A (NTC-01) | 3816.56 | −1.288504 | ~99.9 kΩ |
 | B (NTC-02) | 3820.82 | −1.306170 | ~99.6 kΩ |
 
-The full method, residuals, and raw sweep data are in
+For relative precision you usually do not need that absolute calibration, or a
+reference thermometer at all. You only need the two channels to agree when both
+probes are at the same temperature. Bond the probe beads together, let them
+settle, read the steady A−B on the AVERAGES screen, and set the per-channel
+`CH1_T_OFFSET` / `CH2_T_OFFSET` trims to zero it. The full step-by-step is in
+[`docs/calibration_procedure.md`](docs/calibration_procedure.md).
+
+The absolute method, residuals, and raw sweep data are in
 [`docs/characterisation.md`](docs/characterisation.md) and
 [`docs/calibration/`](docs/calibration/) (fit workbook
 `V2_Thermistor_Measurement.xlsx`).

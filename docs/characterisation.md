@@ -4,6 +4,11 @@ Both NTC thermistors were characterised before installation in the bridge, so
 the R(T) curve is a property of the sensor alone and transfers to any downstream
 circuit.
 
+This is the absolute calibration. If you only want the two channels to agree at
+rest (relative precision), you do not need this at all. See
+[`calibration_procedure.md`](calibration_procedure.md) for the simpler matching
+trim.
+
 ## Method
 
 * **Reference:** UNI-T UT71B multimeter with its K-type thermocouple probe. The
