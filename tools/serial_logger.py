@@ -8,6 +8,11 @@
 # to the screen, and saves it to a timestamped .csv file you can then feed to
 # analyse_log.py. With --plot it also shows a live temperature chart.
 #
+# Each captured row gets a host wall-clock time column (host_time) appended, so
+# the data can be matched against other measurements taken on the same computer.
+# The Pico has no real-time clock of its own, so this host stamp is the reliable
+# way to get an absolute time per row. Disable it with --no-timestamp.
+#
 # Runs on a normal computer (not the Pico). Needs pyserial (plus matplotlib
 # only if you use --plot):
 #     pip install pyserial matplotlib
@@ -23,6 +28,7 @@ import argparse
 import os
 import sys
 import time
+from datetime import datetime
 
 # Raspberry Pi USB vendor id, used to spot a Pico when auto-detecting.
 _RPI_VID = 0x2E8A
@@ -132,6 +138,21 @@ def parse_row(line):
         return None
 
 
+def stamp_line(line, enabled):
+    """Append a host wall-clock timestamp column so each row can be matched to
+    other data taken on the same computer. The CSV header gets the column name,
+    a data row gets a local ISO timestamp (millisecond resolution), and status
+    or log lines pass through unchanged. The column is appended last so it does
+    not disturb the fixed firmware column order that analyse_log.py expects."""
+    if not enabled or not line:
+        return line
+    if line.startswith("cycle"):
+        return line + ",host_time"
+    if line[0].isdigit():
+        return line + "," + datetime.now().isoformat(timespec="milliseconds")
+    return line
+
+
 def main():
     ap = argparse.ArgumentParser(description="Capture the Pico CSV stream to a file.")
     ap.add_argument("--port", default=None, help="serial port (default: auto-detect)")
@@ -142,6 +163,8 @@ def main():
     ap.add_argument("--plot", action="store_true", help="show a live temperature chart")
     ap.add_argument("--list", action="store_true", help="list serial ports and exit")
     ap.add_argument("--quiet", action="store_true", help="do not echo each line to the screen")
+    ap.add_argument("--no-timestamp", action="store_true",
+                    help="do not append a host wall-clock time column")
     args = ap.parse_args()
 
     if args.list:
@@ -186,10 +209,11 @@ def main():
                     plot.maybe_draw()
                 continue
             line = raw.decode("utf-8", "replace").rstrip("\r\n")
+            out = stamp_line(line, not args.no_timestamp)
             if not args.quiet:
-                print(line)
+                print(out)
             if fh:
-                fh.write(line + "\n")
+                fh.write(out + "\n")
                 fh.flush()
             nlines += 1
             if plot:
