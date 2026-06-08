@@ -113,12 +113,13 @@ precision-thermistor-thermometer/
 ├── README.md                 ← this file
 ├── LICENSE
 ├── firmware/                 ← MicroPython for the Pico W
-│   ├── config.py             ← all tunable constants (incl. logging/live MODE)
+│   ├── config.py             ← all tunable constants (QUIET/FAST profiles, calibration)
 │   ├── ads1115.py            ← minimal differential ADS1115 driver
 │   ├── bridge.py             ← bridge maths + B-model / Steinhart-Hart
+│   ├── sampling.py           ← runtime QUIET/FAST sampling-profile switch
 │   ├── ds18b20_reader.py     ← optional 1-Wire ambient sensor
 │   ├── lcd_1inch14.py        ← Waveshare Pico-LCD-1.14 driver (bundled)
-│   ├── display.py            ← multi-page LCD UI (joystick-navigated)
+│   ├── display.py            ← multi-page LCD UI (KEY A/B navigated)
 │   └── main.py               ← measurement loop (USB + flash CSV logging)
 ├── hardware/
 │   ├── ADS1115BasicDesign.*  ← KiCad schematic + BOM (draws an optional DS18B20 not fitted here)
@@ -132,7 +133,9 @@ precision-thermistor-thermometer/
 │   ├── calibration/          ← raw (T,R) sweep, fit spreadsheet, residuals plot
 │   └── build_log.md          ← chronological bring-up / debugging notes
 ├── tools/
-│   └── analyse_log.py        ← off-Pico stability / Allan-deviation analysis
+│   ├── serial_logger.py      ← capture the USB CSV stream to a host file (+ live plot)
+│   ├── analyse_log.py        ← off-Pico stability / Allan-deviation analysis
+│   └── requirements.txt      ← host-side Python dependencies
 ├── enclosure/                ← 3D-printed cover (Fusion 360 + STEP + STL)
 │   ├── cover.f3d
 │   ├── cover.step
@@ -150,12 +153,15 @@ precision-thermistor-thermometer/
    `lcd_1inch14.py` driver is bundled, so nothing else needs downloading.
 3. Edit [`firmware/config.py`](firmware/config.py): set your measured excitation
    voltage, per-channel resistor values, and thermistor coefficients. Choose a
-   `MODE`. `'logging'` is the quiet, roughly 1 mK profile (±0.256 V PGA), and
-   `'live'` is the fast, responsive profile for watching the screen.
+   boot `MODE`. `'logging'` starts in the quiet, roughly 1 mK QUIET profile and
+   `'live'` starts in the fast FAST profile. You can switch between them at any
+   time by long-pressing the joystick (see [Sampling profiles](#sampling-profiles)).
 4. Reset the Pico. `main.py` runs automatically. Readings appear on the LCD,
    stream as CSV over USB serial, and, when `LOG_TO_FLASH` is set, are appended
    to `log.csv` on the Pico's flash so a run survives a USB disconnect.
-5. Pull `log.csv` onto a computer and analyse stability with
+5. Capture a run live on the computer with
+   [`tools/serial_logger.py`](tools/serial_logger.py), or pull `log.csv` off the
+   Pico's flash. Then analyse stability with
    [`tools/analyse_log.py`](tools/analyse_log.py) (see
    [Logging and analysis](#logging-and-analysis)).
 
@@ -166,18 +172,22 @@ The chronological bring-up, including the debugging dead-ends, is in
 
 ## The display
 
-Four pages, cycled with the joystick **LEFT / RIGHT**:
+Five pages, moved through with **KEY A** (next) and **KEY B** (previous). The
+joystick LEFT / RIGHT pages too, as a backup.
 
 | Page | Shows |
 |---|---|
-| **LIVE** | Both probes: temperature, resistance, ΔT, rolling σ |
+| **LIVE** | Both probes in large type: temperature, resistance, ΔT, rolling σ |
+| **AVERAGES** | Rolling mean over a short and a long window, per probe, plus A−B |
 | **TREND** | Scrolling chart of A and B temperature (shared autoscale) |
 | **DELTA** | Scrolling chart of A−B (common-mode-cancelled, most sensitive) |
 | **STATS** | Mean, σ, min-max span, drift rate, STABLE/SETTLING flag |
 
-Buttons: KEY A cycles the backlight (full, dim, off). The backlight is a heat
-source near the sensors, so being able to dim it helps during sensitive runs.
-KEY B resets the statistics. A joystick press toggles a hold/freeze.
+The rest of the controls sit on the joystick. UP cycles the backlight (full,
+dim, off), which matters because the backlight is a heat source near the
+sensors. DOWN resets the statistics and history. A short press of the joystick
+centre toggles a hold/freeze, and a long press switches the sampling profile
+live (see [Sampling profiles](#sampling-profiles)).
 
 <p align="center">
   <img src="images/lcd_live.jpg"  width="24%" alt="LIVE page">
@@ -186,7 +196,23 @@ KEY B resets the statistics. A joystick press toggles a hold/freeze.
   <img src="images/lcd_stats.jpg" width="24%" alt="STATS page">
 </p>
 
-*The LIVE, TREND, DELTA and STATS pages on the Pico-LCD-1.14.*
+*The LIVE, TREND, DELTA and STATS pages on the Pico-LCD-1.14. The on-screen text
+was enlarged and an AVERAGES page added after these photos were taken.*
+
+## Sampling profiles
+
+The instrument carries two sampling profiles and switches between them at
+runtime, with no reflash, by long-pressing the joystick centre. A FAST badge
+shows in the header when the fast profile is active.
+
+| Profile | Averages | Rate | PGA | Cycle | For |
+|---|---|---|---|---|---|
+| **QUIET** | 16 | 8 SPS | ±0.256 V | 5 s | the quiet, roughly 1 mK logging setup |
+| **FAST** | 4 | 32 SPS | ±2.048 V | 1 s | watching the screen and fast transients |
+
+`config.MODE` chooses which one is active at boot. Both profiles are defined in
+[`firmware/config.py`](firmware/config.py), so the averages, rate, range, and
+cycle time of either can be tuned there.
 
 ---
 
@@ -200,7 +226,17 @@ are:
 cycle, t_s, vdiff1_uv, r1_ohm, t1_c, vdiff2_uv, r2_ohm, t2_c, t_amb_c
 ```
 
-Copy `log.csv` onto a computer and run the off-Pico analysis tool:
+The serial stream is the easy way to capture a run straight onto the connected
+computer in real time. `serial_logger.py` auto-detects the Pico's port, saves a
+timestamped file under `data/`, and can draw a live chart:
+
+```
+python tools/serial_logger.py            # capture to data/, echo to screen
+python tools/serial_logger.py --plot     # also show a live temperature chart
+```
+
+The flash log is the backup that survives a USB disconnect. Either way, copy the
+resulting CSV onto a computer and run the off-Pico analysis tool:
 
 ```
 python tools/analyse_log.py log.csv --settle-min 10

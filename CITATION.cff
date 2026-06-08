@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: Precision Thermistor Thermometer
+message: If you use this work, please cite it as below.
+type: software
+authors:
+  - given-names: Warwick
+    family-names: Brown
+abstract: >-
+  A two-channel, sub-10-millikelvin-class temperature measurement and logging
+  instrument built around a Raspberry Pi Pico W and a 16-bit ADS1115 ADC, using
+  matched 100 kohm NTC thermistors in differential Wheatstone half-bridges.
+  Developed as the instrumentation for a passively temperature-stabilised
+  enclosure in a photonic reservoir-computing experiment, as part of a BSc Eng
+  (Electrical Engineering) research project at the University of the
+  Witwatersrand, supervised by Prof. Mitchell Cox.
+keywords:
+  - thermistor
+  - precision temperature measurement
+  - ADS1115
+  - Raspberry Pi Pico
+  - Wheatstone bridge
+  - reservoir computing
+license: MIT
+repository-code: https://github.com/WarwickBrown/Precision-Thermistor-Thermometer
+date-released: 2026-06-08

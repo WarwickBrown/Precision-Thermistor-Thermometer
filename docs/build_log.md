@@ -76,6 +76,24 @@ LIVE, TREND, DELTA and STATS pages, joystick navigation, backlight control,
 rolling σ and drift, and a STABLE/SETTLING flag. The logic was verified in a
 desktop simulation with mocked hardware.
 
+## 9. UI and host-logging rework
+
+* **Dead-end #4: paging felt unreliable.** The display module had at some point
+  been pasted into its own file twice. Python kept the second copy, and that copy
+  navigated only with the joystick LEFT and RIGHT, which are the least dependable
+  inputs on the HAT. Removing the duplicate and moving paging onto the two
+  physical keys (KEY A next, KEY B previous, joystick LEFT and RIGHT as a backup)
+  fixed it.
+* Enlarged the on-screen text and re-laid-out every page so nothing overlaps,
+  after spotting the rolling σ field colliding with the cycle counter and the
+  STATS span and drift line running off the right edge.
+* Added an AVERAGES page (rolling mean over a short and a long window per probe)
+  and a runtime QUIET/FAST sampling switch on a long-press of the joystick
+  centre, so the sampling cadence can change without a reflash.
+* Added `tools/serial_logger.py` to capture the USB CSV stream straight onto the
+  host computer. The page layouts and the button logic were checked in desktop
+  simulations with mocked hardware before flashing.
+
 ## Next
 
 * Formal stability / Allan-deviation campaign (breadboard vs soldered, with and
