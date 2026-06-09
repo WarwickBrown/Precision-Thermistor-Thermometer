@@ -200,14 +200,16 @@ centre toggles a hold/freeze, and a long press switches the sampling profile
 live (see [Sampling profiles](#sampling-profiles)).
 
 <p align="center">
-  <img src="images/lcd_live.jpg"  width="24%" alt="LIVE page">
-  <img src="images/lcd_trend.jpg" width="24%" alt="TREND page">
-  <img src="images/lcd_delta.jpg" width="24%" alt="DELTA page">
-  <img src="images/lcd_stats.jpg" width="24%" alt="STATS page">
+  <img src="images/screen_live.png"     width="19%" alt="LIVE page">
+  <img src="images/screen_averages.png" width="19%" alt="AVERAGES page">
+  <img src="images/screen_trend.png"    width="19%" alt="TREND page">
+  <img src="images/screen_delta.png"    width="19%" alt="DELTA page">
+  <img src="images/screen_stats.png"    width="19%" alt="STATS page">
 </p>
 
-*The LIVE, TREND, DELTA and STATS pages on the Pico-LCD-1.14. The on-screen text
-was enlarged and an AVERAGES page added after these photos were taken.*
+*The LIVE, AVERAGES, TREND, DELTA and STATS pages, rendered from the firmware
+display layout using the panel's own 8x8 font, so they match the LCD pixel for
+pixel. The values shown are illustrative.*
 
 ## Sampling profiles
 
