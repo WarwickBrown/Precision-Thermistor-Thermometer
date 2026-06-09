@@ -22,13 +22,24 @@ python tools/serial_logger.py                 # auto-detect port, save to data/
 python tools/serial_logger.py --list          # list serial ports and exit
 python tools/serial_logger.py --port COM5     # choose the port yourself
 python tools/serial_logger.py --plot          # also draw a live chart
+python tools/serial_logger.py --plot-points 6000  # keep more points on the chart
 python tools/serial_logger.py --out run1.csv  # choose the output file
 python tools/serial_logger.py --no-file       # echo only, do not save
 python tools/serial_logger.py --no-timestamp  # do not append host_time
 ```
 
-The appended `host_time` column does not disturb `analyse_log.py`, which reads
-only the fixed firmware columns and ignores the extra field.
+Notes:
+
+* The capture is unlimited. It runs until you stop it with Ctrl-C, bounded only
+  by disk space, and it reconnects on its own if the USB drops or the Pico
+  resets, carrying on into the same file.
+* The live chart shows a rolling window of the most recent points
+  (`--plot-points`, default 3000) so memory and redraw stay flat over long runs.
+  Everything is still saved to the file regardless of what the chart shows.
+* The appended `host_time` column does not disturb `analyse_log.py`, which reads
+  only the fixed firmware columns and ignores the extra field.
+* The Pico's own flash log has no `host_time`, only the data and `t_s`, so it
+  stays compact. Absolute time comes from this host capture.
 
 This complements the on-Pico flash log. The flash log survives a USB
 disconnect, while the serial capture is the easy way to pull a long run onto the

@@ -85,8 +85,16 @@ cycle, t_s, vdiff1_uv, r1_ohm, t1_c, vdiff2_uv, r2_ohm, t2_c, t_amb_c
 `t_s` is seconds since the firmware started, which is fine for lining things up
 within one run. For an absolute time you can match to other data you take, use
 `serial_logger.py`: it appends a `host_time` column (your computer's wall-clock
-time, to the millisecond) as the last field of every row. The Pico has no clock
-of its own, so this host stamp is the reliable way to get absolute time.
+time, to the millisecond) as the last field of every row, stamped the moment the
+row arrives. The Pico has no clock of its own, so this host stamp is the reliable
+way to get absolute time.
+
+How long can it run? The saved file is unlimited, it keeps going until you stop
+it with Ctrl-C, bounded only by disk space. If the USB is bumped or the Pico
+resets, the capture reconnects on its own and carries on into the same file. With
+`--plot` the chart shows a rolling window of the most recent points
+(`--plot-points`, default 3000) so it stays fast over long runs, while the file
+still keeps everything.
 
 Three ways to see it, easiest first:
 
@@ -104,7 +112,9 @@ Three ways to see it, easiest first:
 There is also a backup copy on the Pico itself. With `LOG_TO_FLASH` on (the
 default) the same CSV is appended to `log.csv` in the Pico's flash, so a run
 survives a USB unplug. Pull that file off with Thonny or
-`mpremote cp :log.csv .`.
+`mpremote cp :log.csv .`. The flash log carries no `host_time`, only the data and
+`t_s`, which keeps it compact. The absolute time is added by the host capture, so
+you get both: a small on-device log and matchable timestamps in the saved file.
 
 To turn the console stream on or off, set `LOG_TO_CONSOLE` in `config.py`. The
 flash log is `LOG_TO_FLASH`.

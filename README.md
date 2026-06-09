@@ -247,7 +247,9 @@ python tools/serial_logger.py            # capture to data/, echo to screen
 python tools/serial_logger.py --plot     # also show a live temperature chart
 ```
 
-The flash log is the backup that survives a USB disconnect. Either way, copy the
+The capture runs as long as you like and reconnects on its own if the USB drops,
+while the live chart keeps a rolling window of recent points. The flash log is
+the backup that survives a USB disconnect. Either way, copy the
 resulting CSV onto a computer and run the off-Pico analysis tool:
 
 ```
