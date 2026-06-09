@@ -104,7 +104,7 @@ CH1_R_A   = 99_140.0      # R1
 CH1_R_B   = 99_120.0      # R3
 CH2_R_TOP = 99_730.0      # R6
 CH2_R_A   = 99_100.0      # R4
-CH2_R_B   = 99_110.0      # R5
+CH2_R_B   = 99_111.0      # R5
 
 # -----------------------------------------------------------------------------
 # 6. Thermistor calibration   (from V2_Thermistor_Measurement.xlsx)
