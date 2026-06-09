@@ -87,6 +87,11 @@ def default_out_path():
 # ---------------------------------------------------------------------------
 # Optional live plot of t1_c / t2_c against t_s. Kept deliberately simple and
 # fully optional, so the capture works even without matplotlib.
+#
+# The chart shows a rolling window of the most recent max_points samples so its
+# memory and redraw time stay flat no matter how long the capture runs. Older
+# points scroll off the chart but are still written to the saved file, so the
+# capture itself is effectively unlimited.
 # ---------------------------------------------------------------------------
 class LivePlot:
     def __init__(self, max_points=3000):
@@ -161,6 +166,8 @@ def main():
     ap.add_argument("--out", default=None, help="output CSV path (default: timestamped in data/)")
     ap.add_argument("--no-file", action="store_true", help="echo only, do not save a file")
     ap.add_argument("--plot", action="store_true", help="show a live temperature chart")
+    ap.add_argument("--plot-points", type=int, default=3000,
+                    help="points kept on the live chart window (the saved file keeps everything)")
     ap.add_argument("--list", action="store_true", help="list serial ports and exit")
     ap.add_argument("--quiet", action="store_true", help="do not echo each line to the screen")
     ap.add_argument("--no-timestamp", action="store_true",
@@ -193,7 +200,7 @@ def main():
     plot = None
     if args.plot:
         try:
-            plot = LivePlot()
+            plot = LivePlot(args.plot_points)
         except Exception as e:
             print("[plot] disabled (%s). Continuing with capture only." % e)
 
@@ -203,7 +210,31 @@ def main():
     nlines = 0
     try:
         while True:
-            raw = ser.readline()
+            # Read one line, and if the port drops (Pico reset or cable bump)
+            # keep trying to reconnect so a long capture survives it. The file
+            # stays open across reconnects; the firmware reprints its header on
+            # restart, which analyse_log.py harmlessly skips.
+            try:
+                raw = ser.readline()
+            except (OSError, serial.SerialException) as e:
+                print("\n[serial] connection lost (%s). Reconnecting..." % e)
+                try:
+                    ser.close()
+                except Exception:
+                    pass
+                ser = None
+                while ser is None:
+                    time.sleep(1.0)
+                    p = args.port or auto_port()
+                    if not p:
+                        continue
+                    try:
+                        ser = serial.Serial(p, args.baud, timeout=1)
+                        port = p
+                        print("[serial] reconnected on %s." % p)
+                    except Exception:
+                        ser = None
+                continue
             if not raw:
                 if plot:
                     plot.maybe_draw()
