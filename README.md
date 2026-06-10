@@ -189,6 +189,8 @@ self-contained `.venv` so nothing is installed into your system Python:
 ./run.sh log                            # capture the USB CSV into data/ (Ctrl-C to stop)
 ./run.sh log --plot                     # ... and draw a live chart
 ./run.sh analyse data/log_YYYY..._.csv  # stability / Allan-deviation analysis
+./run.sh pull-log                       # copy the Pico's flash log.csv into data/
+./run.sh clear-log                      # wipe the Pico's flash log.csv (asks first)
 ```
 
 Only one program can use the USB port at a time, so close Thonny or any serial
