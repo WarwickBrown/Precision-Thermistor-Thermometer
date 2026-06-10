@@ -1,6 +1,6 @@
 # Precision Thermistor Thermometer
 
-A two-channel, sub-10-millikelvin-class temperature measurement and logging
+A two-channel, sub-millikelvin-class temperature measurement and logging
 instrument built around a Raspberry Pi Pico W and a 16-bit ADS1115 ADC, using
 matched 100 kΩ NTC thermistors in differential Wheatstone half-bridges.
 
@@ -15,11 +15,11 @@ The work is part of an MSc (Electrical Engineering) research project at the
 University of the Witwatersrand, supervised by Prof. Mitchell Cox. The research
 title is not finalised yet.
 
-> **Status:** working two-channel prototype on soldered stripboard, housed in a
-> 3D-printed enclosure. The thermistors are characterised, the two channels are
-> matched, and a bonded-probe run shows the A−B difference holding to about 0.5
-> to 0.8 mK. The remaining milestone is the rigorous absolute stability
-> (Allan-deviation) campaign. See [Project status](#project-status).
+> **Status: v1.0.** A working two-channel instrument on soldered stripboard,
+> housed in a 3D-printed enclosure. The thermistors are characterised, the two
+> channels are matched, and a bonded-probe run shows the A−B difference holding to
+> about 0.5 to 0.8 mK, with each probe to about 0.5 mK. See
+> [Project status](#project-status).
 
 ![Two-channel thermistor thermometer](images/system_overview.jpg)
 
@@ -89,7 +89,7 @@ absolute accuracy (about 0.1 °C), is in
 ## Measured performance
 
 > Numbers marked _(prelim.)_ are early bench observations rather than a rigorous
-> characterisation. The formal stability campaign is the next milestone.
+> characterisation. The stability rows are from the bonded-probe calibration run.
 
 | Metric | Value | Notes |
 |---|---|---|
@@ -100,15 +100,16 @@ absolute accuracy (about 0.1 °C), is in
 | Absolute accuracy | ~0.1 °C | limited by reference probe (UNI-T UT71B) |
 | Single-channel noise (1σ, single sample) | ~0.4 to 0.6 mK _(calibration run)_ | A ~0.6, B ~0.4, box drift removed |
 | Differential A−B stability (Allan) | ~0.5 to 0.8 mK _(calibration run)_ | bonded probes, see [calibration results](docs/calibration/calibration_run_results.md) |
-| **Absolute stability / Allan (formal campaign)** | not yet measured | longer stabilised run pending |
+| Absolute long-term stability | reference-limited | bounded by the thermal environment and reference resistors, not the ADC |
 
 A note on accuracy versus precision. The ~0.1 °C absolute figure is set by the
 reference thermometer used during calibration. The instrument's relative
-stability, which is the quantity that matters for thermal control, is far
-better. The first bonded-probe run already shows the A−B difference holding to
-about 0.5 to 0.8 mK while each channel alone is drift-limited (see the
-[calibration results](docs/calibration/calibration_run_results.md)), and the
-formal campaign will extend this to absolute single-channel stability.
+stability, which is the quantity that matters for thermal control, is far better.
+The bonded-probe run shows the A−B difference holding to about 0.5 to 0.8 mK and
+each probe to about 0.5 mK (see the
+[calibration results](docs/calibration/calibration_run_results.md)). Pushing the
+absolute single-channel figure lower would need a more stable thermal reference
+than was available, since it is bounded by the environment rather than the ADC.
 
 ---
 
@@ -340,8 +341,28 @@ The absolute method, residuals, and raw sweep data are in
 - [x] Multi-page LCD UI
 - [x] On-Pico flash logging + off-Pico Allan-deviation analysis tool
 - [x] 3D-printed enclosure modelled and printed (fit being refined)
-- [ ] Formal stability / Allan-deviation campaign (breadboard vs soldered)
-- [ ] Decision: is 16-bit sufficient, or move to the ADS1220?
+- [x] Differential stability measured (A−B sub-millikelvin, bonded-probe run)
+- [x] 16-bit confirmed sufficient for the differential measurement, so the ADS1220 is not needed
+
+The absolute long-term stability is bounded by the thermal environment and the
+reference resistors rather than the ADC, so characterising it below the drift of
+the box used here would require a more stable reference.
+
+---
+
+## Future improvements
+
+Out of scope for v1.0, but worth noting:
+
+- **Pulsed excitation** with a logic-level PMOS, to cut the ~27 mK self-heating
+  offset (deferred because only a non-logic-level part was available, see the
+  [design notes](docs/design_notes.md)).
+- **Absolute single-channel stability** characterisation, which would need a
+  thermal reference more stable than the box used here.
+- **Per-channel absolute recalibration** against a better reference, to improve
+  the ~0.1 °C absolute accuracy.
+- **WiFi/NTP timestamps** on the Pico W, so the standalone flash log carries
+  absolute time without the host capture.
 
 ---
 

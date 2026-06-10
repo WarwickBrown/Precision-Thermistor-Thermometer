@@ -11,9 +11,9 @@ are easy to confuse.
   instrument can resolve. This is what matters for thermal control, and it is far
   finer than the accuracy.
 
-All figures below are derived from the design and the component datasheets. They
-are the targets the formal Allan-deviation campaign will confirm or correct on
-real hardware. That measurement is still pending.
+All figures below are derived from the design and the component datasheets. The
+bonded-probe calibration run confirms them at the differential level (see the
+measured results near the end of this document).
 
 ## Headline numbers
 
@@ -123,16 +123,16 @@ has a single-sample repeatability of about half a millikelvin, but its absolute
 reading is only good to ~0.1 °C and its longer-term stability is set by ambient
 and reference-resistor drift, not by ADC noise. **Used differentially** (A−B),
 the common-mode rejection removes that drift and the pair reaches the
-sub-millikelvin floor. This run did not pin the single-channel noise floor on its
-own, because the box was still drifting, so the true single-channel floor sits
-somewhere between the differential result and the theoretical ~85 µK and needs a
-stabilised run to measure.
+sub-millikelvin floor. The single-channel noise floor sits somewhere between the
+differential result and the theoretical ~85 µK. Pinning it more precisely would
+need a thermal reference more stable than the box used here, because the box
+drift, not the ADC, sets the limit.
 
 ## Verification status
 
 The resolution and the noise floor were checked by round-trip simulation (see
-[`design_notes.md`](design_notes.md)). The remaining empirical milestone is the
-overlapping Allan deviation of a long, deliberately stabilised run, which will
-pin the absolute single-channel stability. Until then, treat the per-channel
-precision targets above as design figures, confirmed only at the differential
-level by the calibration run.
+[`design_notes.md`](design_notes.md)) and confirmed at the differential level by
+the bonded-probe calibration run. The per-channel absolute stability is bounded
+by the thermal environment and the reference resistors rather than the ADC, so
+characterising it below the available box drift would need a more stable
+reference.

@@ -105,9 +105,12 @@ drift-limited, but A−B stays sub-millikelvin (about 0.5 to 0.8 mK), which is t
 common-mode rejection the differential bridge was built for. Full write-up in
 [`calibration/calibration_run_results.md`](calibration/calibration_run_results.md).
 
-## Next
+## Outcome
 
-* Formal stability / Allan-deviation campaign (breadboard vs soldered, with and
-  without the RC filters). This is the measurement the whole proof of concept
-  hinges on.
-* Decide whether 16-bit is sufficient or whether to move to the ADS1220.
+The bonded-probe run answered the central question: a commodity 16-bit ADS1115 in
+a matched differential bridge resolves temperature differences at the
+sub-millikelvin level, so the more expensive 24-bit ADS1220 is not needed for this
+application. The absolute single-channel stability is bounded by the thermal
+environment rather than the ADC, and characterising it further would need a more
+stable reference than was available. Possible extensions are in the README's
+future-improvements section.

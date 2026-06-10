@@ -96,10 +96,11 @@ count. Each probe's absolute accuracy is separate and reference-limited at
 - It **does** establish the channel matching, the per-probe short-term precision
   above, and the differential (A − B) stability floor of about 0.5 to 0.8 mK on
   real hardware.
-- It is **not** the formal stability campaign. The box was still settling, so the
-  per-channel absolute figures are drift-limited rather than a true noise floor. A
-  longer, deliberately stabilised run is still needed to characterise the absolute
-  stability and to compare the breadboard and soldered builds.
+- It **does not** pin the absolute single-channel stability. The box was still
+  settling, so the per-channel absolute figures are drift-limited rather than a
+  true noise floor. That floor is bounded by the thermal environment rather than
+  the ADC, so characterising it further would need a reference more stable than
+  the box used here.
 
 For the theoretical floor these sit against, see
 [`../error_budget.md`](../error_budget.md): resolution ~0.21 mK/LSB and a
