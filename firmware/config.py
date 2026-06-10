@@ -136,13 +136,14 @@ CH2_SH_B = 0.0001953817084
 CH2_SH_C = 0.0000001702921204
 
 # --- Per-channel temperature trim (deg C), added after conversion ---
-# Use these to MATCH the two probes at rest. Put both probes at the same
-# temperature (bond the beads together), let them settle, read the steady A-B on
-# the AVERAGES screen, then split that difference between the two offsets so it
-# goes to zero. Offsets are added, so if A reads high, lower CH1 and/or raise
-# CH2. Leave at 0.0 for no trim. See docs/calibration_procedure.md.
-CH1_T_OFFSET = 0.0
-CH2_T_OFFSET = 0.0
+# Matches the two probes. With both beads bonded in a temperature-controlled box
+# (docs/calibration/calibration_log.csv, 2026-06-10) A read +133.5 mK above B,
+# with the difference flat to a few mK as the box drifted, so that offset is
+# split between the channels to bring A-B to zero. To re-trim: bond the beads,
+# let them settle, read the steady A-B on the AVERAGES screen, and split it (if A
+# reads high, lower CH1 and raise CH2). See docs/calibration_procedure.md.
+CH1_T_OFFSET = -0.0667
+CH2_T_OFFSET = +0.0667
 
 # -----------------------------------------------------------------------------
 # 7. Sampling / averaging  --  two switchable profiles
