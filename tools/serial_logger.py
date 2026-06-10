@@ -62,6 +62,7 @@ def auto_port():
     serial = _require_pyserial()
     from serial.tools import list_ports as lp
     cands = list(lp.comports())
+    cands.sort(key=lambda p: 0 if "cu." in (p.device or "") else 1)  # macOS: prefer cu.*
     for p in cands:                                   # prefer a Raspberry Pi VID
         if p.vid == _RPI_VID:
             return p.device
@@ -189,7 +190,11 @@ def main():
     try:
         ser = serial.Serial(port, args.baud, timeout=1)
     except Exception as e:
-        sys.exit("Could not open %s (%s)" % (port, e))
+        print("Could not open %s (%s)." % (port, e))
+        print("Most often the port is held by another program. Close Thonny, the")
+        print("MicroPico or Serial Monitor extension, or any open REPL, then retry.")
+        print("Run  python tools/serial_logger.py --list  to see the ports.")
+        sys.exit(1)
 
     out_path = None
     fh = None
@@ -204,10 +209,16 @@ def main():
         except Exception as e:
             print("[plot] disabled (%s). Continuing with capture only." % e)
 
-    print("Listening on %s%s. Press Ctrl-C to stop." %
-          (port, "" if not out_path else " -> %s" % out_path))
+    print("serial_logger  (python %s)" % sys.version.split()[0])
+    print("  port  : %s" % port)
+    print("  saving: %s" % (os.path.abspath(out_path) if out_path else "(off, --no-file)"))
+    print("Waiting for CSV from the Pico. Press Ctrl-C to stop.")
+    print("If nothing scrolls below, the Pico is not streaming (REPL open, wrong")
+    print("port, or the port is busy with another program).")
 
     nlines = 0
+    start = time.time()
+    hinted = False
     try:
         while True:
             # Read one line, and if the port drops (Pico reset or cable bump)
@@ -236,6 +247,11 @@ def main():
                         ser = None
                 continue
             if not raw:
+                if nlines == 0 and not hinted and time.time() - start > 5:
+                    print("[serial] connected to %s but no data in 5 s. Is main.py "
+                          "running on the Pico (not the REPL), and is the port free "
+                          "(Thonny / Serial Monitor closed)?" % port)
+                    hinted = True
                 if plot:
                     plot.maybe_draw()
                 continue
@@ -261,7 +277,12 @@ def main():
             pass
         if fh:
             fh.close()
-            print("Saved %d lines to %s" % (nlines, out_path))
+            if nlines:
+                print("Saved %d lines to %s" % (nlines, os.path.abspath(out_path)))
+            else:
+                print("No data arrived, so %s is empty. The Pico was probably not "
+                      "streaming (REPL open, or the port was held by another "
+                      "program such as Thonny)." % os.path.abspath(out_path))
 
 
 if __name__ == "__main__":

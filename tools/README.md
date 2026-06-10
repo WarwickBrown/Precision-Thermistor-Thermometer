@@ -45,6 +45,24 @@ This complements the on-Pico flash log. The flash log survives a USB
 disconnect, while the serial capture is the easy way to pull a long run onto the
 computer in real time.
 
+### If it is not writing to the file
+
+Run it from the VS Code integrated terminal (`python tools/serial_logger.py`),
+not the Run button, so you can see the output and press Ctrl-C to stop cleanly.
+The tool prints the absolute save path on startup (`saving: ...`), which by
+default is this repo's `data/` folder, not your current directory.
+
+* **Nothing scrolls and the file ends up empty.** No data is reaching the
+  computer. Only one program can hold a serial port at a time, so close Thonny,
+  the VS Code MicroPico or Serial Monitor extension, and any other REPL first.
+  Then reset the Pico so `main.py` is actually running and streaming, rather than
+  sitting at the REPL. The tool now prints a hint if it connects but sees no data
+  within five seconds.
+* **"This tool needs pyserial".** Install it into the same interpreter VS Code is
+  using. In the VS Code terminal run `python -m pip install pyserial` (or
+  `pip install -r tools/requirements.txt`), making sure the interpreter shown in
+  the terminal prompt is the one the Run button uses.
+
 ## `analyse_log.py`
 
 Stability analysis for the CSV the firmware produces (`log.csv`, a flash dump,
