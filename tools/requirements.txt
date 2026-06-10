@@ -1,6 +1,8 @@
 # Host-side tools (run on a normal computer, not the Pico).
 # serial_logger.py needs pyserial. analyse_log.py needs numpy and matplotlib.
-# matplotlib is also used by serial_logger.py --plot.
+# matplotlib is also used by serial_logger.py --plot. mpremote copies the
+# firmware onto the Pico (used by ./run.sh flash).
 pyserial>=3.5
 numpy>=1.20
 matplotlib>=3.4
+mpremote>=1.20

@@ -112,6 +112,7 @@ better, and that is what the Allan-deviation campaign will quantify.
 precision-thermistor-thermometer/
 ├── README.md                 ← this file
 ├── LICENSE
+├── run.sh                    ← host helper: setup, flash, log, analyse
 ├── firmware/                 ← MicroPython for the Pico W
 │   ├── config.py             ← all tunable constants (QUIET/FAST profiles, calibration)
 │   ├── ads1115.py            ← minimal differential ADS1115 driver
@@ -173,6 +174,27 @@ precision-thermistor-thermometer/
 
 The chronological bring-up, including the debugging dead-ends, is in
 [`docs/build_log.md`](docs/build_log.md).
+
+---
+
+## Host tools (one-time setup)
+
+The off-Pico steps (uploading the firmware, capturing, plotting, analysis) are
+wrapped by [`run.sh`](run.sh), which keeps their Python dependencies in a
+self-contained `.venv` so nothing is installed into your system Python:
+
+```
+./run.sh setup                          # once: create .venv and install the tools
+./run.sh flash                          # copy firmware/ to the Pico and reboot it
+./run.sh log                            # capture the USB CSV into data/ (Ctrl-C to stop)
+./run.sh log --plot                     # ... and draw a live chart
+./run.sh analyse data/log_YYYY..._.csv  # stability / Allan-deviation analysis
+```
+
+Only one program can use the USB port at a time, so close Thonny or any serial
+monitor before `flash` or `log`. The tools under [`tools/`](tools/) can also be
+run directly if you prefer (Windows users without bash can create the venv with
+`python -m venv .venv` and `pip install -r tools/requirements.txt`).
 
 ---
 
