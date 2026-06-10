@@ -78,10 +78,24 @@ This is the central result the instrument was built to demonstrate: a commodity
 the sub-millikelvin level, even while the absolute temperature drifts by hundreds
 of millikelvin.
 
+## Per-probe short-term precision
+
+Removing the box drift with successive differences (the standard short-term-noise
+estimator) gives a single-sample noise of about **0.6 mK for probe A and 0.4 mK
+for probe B** (1σ). This matches the A − B Allan deviation of 0.53 mK to better
+than 0.01 mK, which is the cross-check that it is genuine sensor noise and not an
+artefact. These are the per-probe precisions used independently. They are upper
+bounds, because the box was still drifting, so the true floor is no worse than
+this and approaches the theoretical ~85 µK (see
+[`../error_budget.md`](../error_budget.md)). The resolution is 0.21 mK per ADC
+count. Each probe's absolute accuracy is separate and reference-limited at
+~0.1 °C.
+
 ## What this run does and does not show
 
-- It **does** establish the channel matching and the differential (A − B)
-  stability floor on real hardware, around 0.5 to 0.8 mK.
+- It **does** establish the channel matching, the per-probe short-term precision
+  above, and the differential (A − B) stability floor of about 0.5 to 0.8 mK on
+  real hardware.
 - It is **not** the formal stability campaign. The box was still settling, so the
   per-channel absolute figures are drift-limited rather than a true noise floor. A
   longer, deliberately stabilised run is still needed to characterise the absolute

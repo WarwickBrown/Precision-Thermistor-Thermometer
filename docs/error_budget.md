@@ -108,12 +108,17 @@ to set against the budget above (full write-up in
 | Quantity | Measured | Notes |
 |---|---|---|
 | Resolution | 0.21 mK/LSB | as designed |
-| Single-channel short-term scatter | ~0.8 mK (Allan at 5 s) | an upper bound, the run was drift-limited |
+| Single-channel noise (1σ, single sample) | ~0.4 to 0.6 mK | drift removed via successive differences (A ~0.6, B ~0.4); the as-measured Allan was ~0.8 mK, inflated by box drift |
 | Differential A−B stability | ~0.5 to 0.8 mK (Allan) | drift cancels, the real floor reached |
 | Absolute accuracy | ~0.1 °C | reference-limited, unchanged by matching |
 
+The single-channel noise is the short-term scatter once the box's own drift is
+removed (the successive-difference estimate, which matches the A−B Allan
+deviation to better than 0.01 mK). The raw single-channel Allan deviation on this
+run was ~0.8 mK only because the box was still drifting.
+
 **Used independently** (each probe as its own absolute thermometer), a channel
-resolves short-term changes at roughly the millikelvin level, but its absolute
+has a single-sample repeatability of about half a millikelvin, but its absolute
 reading is only good to ~0.1 °C and its longer-term stability is set by ambient
 and reference-resistor drift, not by ADC noise. **Used differentially** (A−B),
 the common-mode rejection removes that drift and the pair reaches the
