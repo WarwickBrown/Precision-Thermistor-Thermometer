@@ -108,7 +108,7 @@ to set against the budget above (full write-up in
 | Quantity | Measured | Notes |
 |---|---|---|
 | Resolution | 0.21 mK/LSB | as designed |
-| Single-channel noise (1σ, single sample) | ~0.4 to 0.6 mK | drift removed via successive differences (A ~0.6, B ~0.4); the as-measured Allan was ~0.8 mK, inflated by box drift |
+| Single-channel noise (1σ, single sample) | ~0.4 to 0.6 mK | drift removed via successive differences (A ~0.6, B ~0.4), versus an as-measured Allan of ~0.8 mK inflated by box drift |
 | Differential A−B stability | ~0.5 to 0.8 mK (Allan) | drift cancels, the real floor reached |
 | Absolute accuracy | ~0.1 °C | reference-limited, unchanged by matching |
 
