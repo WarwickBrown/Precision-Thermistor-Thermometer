@@ -46,9 +46,11 @@ Reading differentially (AINP − AINN) rather than single-ended does three thing
 | **Noise floor (single sample)** | **~55 µK RMS** |
 | Span at PGA = 16 | ±7 K around balance |
 
-So resolution and the white-noise floor are comfortably sub-mK. The real limits
-are self-heating, reference-resistor drift, and layout/EMI, which are addressed
-below.
+So resolution and the white-noise floor are comfortably sub-mK. The ~55 µK above
+is the ADC-noise component alone. The combined single-sample floor including
+quantisation is about 85 µK, and the full budget with the measured results is in
+[`error_budget.md`](error_budget.md). The real limits are self-heating,
+reference-resistor drift, and layout/EMI, which are addressed below.
 
 ## Excitation: continuous DC (pulsing deferred)
 

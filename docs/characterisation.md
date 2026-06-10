@@ -18,7 +18,7 @@ trim.
   thermistor resistance and reference temperature were recorded as pairs once
   the rate of change was slow enough for both sensors to track together.
 * **Fit window:** the model is fit to the settled middle of the sweep (roughly
-  5 to 40 °C), and the residuals are then evaluated over the 10–30 °C operating
+  5 to 40 °C), and the residuals are then evaluated over the 10 to 30 °C operating
   range. The points at the cold and hot extremes were taken while the bath was
   still ramping, so they were excluded. They degraded the fit without
   representing the operating point.

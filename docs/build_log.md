@@ -55,7 +55,7 @@ calibration coefficients.
 
 ## 6. Thermistor characterisation
 
-UT71B sweep, B-model fit for the 10–30 °C operating range. Coefficients were
+UT71B sweep, B-model fit for the 10 to 30 °C operating range. Coefficients were
 entered in config and the firmware conversion was verified against the fit's own
 predictions.
 

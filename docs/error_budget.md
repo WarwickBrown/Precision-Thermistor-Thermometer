@@ -34,11 +34,12 @@ thermometer, not an accurate absolute one.
 The half-bridge sensitivity is
 
 ```
-S = dVdiff/dT = V_exc · B / (4 · T²)  ≈ 35 to 37 mV/K
+S = dVdiff/dT = V_exc · B / (4 · T²)  ≈ 36 mV/K
 ```
 
-at V_exc = 3.3 V, B ≈ 3820 K, near 25 °C. The ADS1115 at PGA = 16 (±0.256 V)
-has an LSB of
+at V_exc = 3.3 V near 25 °C. (The fitted B of 3820 K gives 35.5 mV/K, while a
+nominal 100 kΩ NTC with B ≈ 3950 K gives 36.6 mV/K, so the figure is ~36 mV/K
+either way.) The ADS1115 at PGA = 16 (±0.256 V) has an LSB of
 
 ```
 LSB = 2 · 0.256 V / 65536 = 7.81 µV

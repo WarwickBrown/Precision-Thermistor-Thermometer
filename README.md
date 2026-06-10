@@ -98,6 +98,7 @@ absolute accuracy (about 0.1 °C), is in
 | Thermistor B-value match (A vs B) | 0.1 % | 3816.6 K vs 3820.8 K |
 | Thermistor R₀ match (A vs B) | 0.3 % | ~99.9 kΩ vs ~99.6 kΩ at 25 °C |
 | Absolute accuracy | ~0.1 °C | limited by reference probe (UNI-T UT71B) |
+| Single-channel noise (1σ, single sample) | ~0.4 to 0.6 mK _(calibration run)_ | A ~0.6, B ~0.4, box drift removed |
 | Differential A−B stability (Allan) | ~0.5 to 0.8 mK _(calibration run)_ | bonded probes, see [calibration results](docs/calibration/calibration_run_results.md) |
 | **Absolute stability / Allan (formal campaign)** | not yet measured | longer stabilised run pending |
 
@@ -117,6 +118,7 @@ formal campaign will extend this to absolute single-channel stability.
 precision-thermistor-thermometer/
 ├── README.md                 ← this file
 ├── LICENSE
+├── CITATION.cff              ← how to cite this work
 ├── run.sh                    ← host helper: setup, flash, log, analyse
 ├── firmware/                 ← MicroPython for the Pico W
 │   ├── config.py             ← all tunable constants (QUIET/FAST profiles, calibration)
@@ -299,7 +301,7 @@ The tool needs `numpy` and `matplotlib`.
 ## Calibration
 
 Thermistors are characterised individually against a UNI-T UT71B reference and
-then fitted with a two-parameter B-model tuned for the 10–30 °C operating range:
+then fitted with a two-parameter B-model tuned for the 10 to 30 °C operating range:
 
 ```
 T(°C) = B / (ln R − intercept) − 273.15
@@ -315,7 +317,10 @@ reference thermometer at all. You only need the two channels to agree when both
 probes are at the same temperature. Bond the probe beads together, let them
 settle, read the steady A−B on the AVERAGES screen, and set the per-channel
 `CH1_T_OFFSET` / `CH2_T_OFFSET` trims to zero it. The full step-by-step is in
-[`docs/calibration_procedure.md`](docs/calibration_procedure.md).
+[`docs/calibration_procedure.md`](docs/calibration_procedure.md). On this build
+the channels are already matched: a bonded-probe run measured A−B at +133.5 mK,
+now trimmed to within 0.1 mK (see
+[calibration results](docs/calibration/calibration_run_results.md)).
 
 The absolute method, residuals, and raw sweep data are in
 [`docs/characterisation.md`](docs/characterisation.md) and
