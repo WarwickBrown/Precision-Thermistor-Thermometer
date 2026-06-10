@@ -107,3 +107,8 @@ pick a true NTC resistance, compute the differential voltage the ADC would see,
 run it back through the firmware maths, and confirm recovery. The firmware's
 B-model and Steinhart-Hart conversions were checked against the characterisation
 spreadsheet's own predicted temperatures and matched to the third decimal.
+
+The common-mode rejection was later measured on a bonded-probe run: as the box
+drifted about 190 mK, the A−B difference held to a sigma of 3 mK, roughly 18
+times below either channel alone, confirming the design intent. See
+[`calibration/calibration_run_results.md`](calibration/calibration_run_results.md).

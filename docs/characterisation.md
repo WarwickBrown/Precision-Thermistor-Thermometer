@@ -54,6 +54,11 @@ ability to detect small changes in temperature, is far finer and is limited by
 ADC noise and bridge drift in the millikelvin range. The two figures describe
 different things and should not be conflated.
 
+A first bonded-probe run quantifies this gap: the A−B difference holds to about
+0.5 to 0.8 mK while each channel alone is drift-limited, against the same
+~0.1 °C absolute floor. See
+[`calibration/calibration_run_results.md`](calibration/calibration_run_results.md).
+
 ## Files
 
 * [`calibration/`](calibration/) holds the raw (T, R) sweep data, the fit

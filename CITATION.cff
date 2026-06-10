@@ -10,7 +10,7 @@ abstract: >-
   instrument built around a Raspberry Pi Pico W and a 16-bit ADS1115 ADC, using
   matched 100 kohm NTC thermistors in differential Wheatstone half-bridges.
   Developed as the instrumentation for a passively temperature-stabilised
-  enclosure in a photonic reservoir-computing experiment, as part of a BSc Eng
+  enclosure in a photonic reservoir-computing experiment, as part of an MSc
   (Electrical Engineering) research project at the University of the
   Witwatersrand, supervised by Prof. Mitchell Cox.
 keywords:

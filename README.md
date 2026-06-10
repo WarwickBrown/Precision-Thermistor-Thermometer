@@ -11,14 +11,15 @@ a multimode fibre acts as the nonlinear mixing medium, and its refractive index
 Characterising and controlling that thermal environment is what this instrument
 is for.
 
-The work is part of a BSc Eng (Electrical Engineering) research project at the
+The work is part of an MSc (Electrical Engineering) research project at the
 University of the Witwatersrand, supervised by Prof. Mitchell Cox. The research
 title is not finalised yet.
 
 > **Status:** working two-channel prototype on soldered stripboard, housed in a
-> 3D-printed enclosure. The thermistors are characterised and the live UI is
-> complete. The remaining milestone is the rigorous stability (Allan-deviation)
-> characterisation. See [Project status](#project-status).
+> 3D-printed enclosure. The thermistors are characterised, the two channels are
+> matched, and a bonded-probe run shows the A−B difference holding to about 0.5
+> to 0.8 mK. The remaining milestone is the rigorous absolute stability
+> (Allan-deviation) campaign. See [Project status](#project-status).
 
 ![Two-channel thermistor thermometer](images/system_overview.jpg)
 
@@ -103,7 +104,10 @@ absolute accuracy (about 0.1 °C), is in
 A note on accuracy versus precision. The ~0.1 °C absolute figure is set by the
 reference thermometer used during calibration. The instrument's relative
 stability, which is the quantity that matters for thermal control, is far
-better, and that is what the Allan-deviation campaign will quantify.
+better. The first bonded-probe run already shows the A−B difference holding to
+about 0.5 to 0.8 mK while each channel alone is drift-limited (see the
+[calibration results](docs/calibration/calibration_run_results.md)), and the
+formal campaign will extend this to absolute single-channel stability.
 
 ---
 
@@ -342,7 +346,7 @@ MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Built at the University of the Witwatersrand as part of a BSc Eng (Electrical
+Built at the University of the Witwatersrand as part of an MSc (Electrical
 Engineering) project supervised by Prof. Mitchell Cox, as the instrumentation
 for a photonic reservoir-computing experiment. The 3D-printed enclosure was
 designed by Matthew Maccelari. The firmware and circuit were developed

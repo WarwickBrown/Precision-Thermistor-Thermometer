@@ -99,10 +99,34 @@ are worth using.
   coupling. That is why A−B is the most stable channel and the best place to look
   for a small real signal against a drifting background.
 
+## Measured so far (first calibration run)
+
+A bonded-probe run in a temperature-controlled box gives the first real numbers
+to set against the budget above (full write-up in
+[`calibration/calibration_run_results.md`](calibration/calibration_run_results.md)):
+
+| Quantity | Measured | Notes |
+|---|---|---|
+| Resolution | 0.21 mK/LSB | as designed |
+| Single-channel short-term scatter | ~0.8 mK (Allan at 5 s) | an upper bound, the run was drift-limited |
+| Differential A−B stability | ~0.5 to 0.8 mK (Allan) | drift cancels, the real floor reached |
+| Absolute accuracy | ~0.1 °C | reference-limited, unchanged by matching |
+
+**Used independently** (each probe as its own absolute thermometer), a channel
+resolves short-term changes at roughly the millikelvin level, but its absolute
+reading is only good to ~0.1 °C and its longer-term stability is set by ambient
+and reference-resistor drift, not by ADC noise. **Used differentially** (A−B),
+the common-mode rejection removes that drift and the pair reaches the
+sub-millikelvin floor. This run did not pin the single-channel noise floor on its
+own, because the box was still drifting, so the true single-channel floor sits
+somewhere between the differential result and the theoretical ~85 µK and needs a
+stabilised run to measure.
+
 ## Verification status
 
 The resolution and the noise floor were checked by round-trip simulation (see
-[`design_notes.md`](design_notes.md)). The figures here are theoretical. The
-empirical confirmation, the overlapping Allan deviation of a long logged run, is
-the project's remaining milestone. Until then, treat the precision numbers as
-design targets rather than measured results.
+[`design_notes.md`](design_notes.md)). The remaining empirical milestone is the
+overlapping Allan deviation of a long, deliberately stabilised run, which will
+pin the absolute single-channel stability. Until then, treat the per-channel
+precision targets above as design figures, confirmed only at the differential
+level by the calibration run.

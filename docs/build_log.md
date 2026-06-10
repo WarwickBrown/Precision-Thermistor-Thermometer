@@ -94,6 +94,17 @@ desktop simulation with mocked hardware.
   host computer. The page layouts and the button logic were checked in desktop
   simulations with mocked hardware before flashing.
 
+## 10. Channel matching and first Allan deviation
+
+Both beads were bonded and logged in a temperature-controlled box. Both probes
+followed the box drift together (about 190 mK, agreeing to within 4 mK), so the
+A−B difference sat flat at +133.5 mK. That offset was split between the two
+channels (`CH1_T_OFFSET`, `CH2_T_OFFSET`) to bring A−B to within 0.1 mK. The same
+run gave the first overlapping Allan deviation: each channel alone is
+drift-limited, but A−B stays sub-millikelvin (about 0.5 to 0.8 mK), which is the
+common-mode rejection the differential bridge was built for. Full write-up in
+[`calibration/calibration_run_results.md`](calibration/calibration_run_results.md).
+
 ## Next
 
 * Formal stability / Allan-deviation campaign (breadboard vs soldered, with and

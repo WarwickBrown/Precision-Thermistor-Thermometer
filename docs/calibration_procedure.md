@@ -71,6 +71,11 @@ What this does not fix: slow drift over time, which is a thermal-design and
 stability question that the Allan-deviation campaign quantifies, and absolute
 accuracy, which is the next section.
 
+Worked example: the first run gave a steady A−B of +133.5 mK, which was split
+into `CH1_T_OFFSET = -0.0667` and `CH2_T_OFFSET = +0.0667`, bringing A−B to
+within 0.1 mK. The data, statistics and Allan deviation are in
+[`calibration/calibration_run_results.md`](calibration/calibration_run_results.md).
+
 ## 3. Absolute calibration (optional)
 
 If you also want the readings to be correct on a true temperature scale,
