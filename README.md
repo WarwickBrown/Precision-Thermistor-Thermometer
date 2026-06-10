@@ -97,7 +97,8 @@ absolute accuracy (about 0.1 °C), is in
 | Thermistor B-value match (A vs B) | 0.1 % | 3816.6 K vs 3820.8 K |
 | Thermistor R₀ match (A vs B) | 0.3 % | ~99.9 kΩ vs ~99.6 kΩ at 25 °C |
 | Absolute accuracy | ~0.1 °C | limited by reference probe (UNI-T UT71B) |
-| **Stability / Allan deviation (Veroboard)** | not yet measured | formal logged campaign pending |
+| Differential A−B stability (Allan) | ~0.5 to 0.8 mK _(calibration run)_ | bonded probes, see [calibration results](docs/calibration/calibration_run_results.md) |
+| **Absolute stability / Allan (formal campaign)** | not yet measured | longer stabilised run pending |
 
 A note on accuracy versus precision. The ~0.1 °C absolute figure is set by the
 reference thermometer used during calibration. The instrument's relative
@@ -133,7 +134,7 @@ precision-thermistor-thermometer/
 │   ├── error_budget.md       ← theoretical accuracy vs precision, full budget
 │   ├── calibration_procedure.md ← how to calibrate and match the two channels
 │   ├── characterisation.md   ← thermistor calibration write-up
-│   ├── calibration/          ← raw (T,R) sweep, fit spreadsheet, residuals plot
+│   ├── calibration/          ← (T,R) sweep, fit workbook, channel-matching run + results
 │   └── build_log.md          ← chronological bring-up / debugging notes
 ├── tools/
 │   ├── serial_logger.py      ← capture the USB CSV stream to a host file (+ live plot)
@@ -325,6 +326,7 @@ The absolute method, residuals, and raw sweep data are in
 - [x] Single-channel bring-up on breadboard
 - [x] Two-channel (Option C) differential operation
 - [x] Thermistor characterisation (B-model)
+- [x] Channel matching (A−B offset trimmed from a bonded-probe run)
 - [x] Soldered onto stripboard with RC input filters + star ground
 - [x] Multi-page LCD UI
 - [x] On-Pico flash logging + off-Pico Allan-deviation analysis tool
