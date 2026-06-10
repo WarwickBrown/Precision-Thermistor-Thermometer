@@ -53,7 +53,20 @@ EOF
 
 cmd_setup() {
     echo "Creating virtual environment in .venv ..."
-    python3 -m venv "$VENV"
+    # Prefer python3 -m venv, but fall back to virtualenv when the system is
+    # missing the python3-venv package (no ensurepip) and apt/sudo aren't an
+    # option. virtualenv bundles its own pip, so it sidesteps ensurepip.
+    if ! python3 -m venv "$VENV" 2>/dev/null; then
+        echo "python3 -m venv unavailable (no python3-venv); using virtualenv ..."
+        rm -rf "$VENV"
+        if ! command -v virtualenv >/dev/null 2>&1; then
+            echo "Installing virtualenv into your user site ..."
+            python3 -m pip install --user --break-system-packages virtualenv
+        fi
+        local venv_bin
+        venv_bin="$(command -v virtualenv || echo "$HOME/.local/bin/virtualenv")"
+        "$venv_bin" "$VENV"
+    fi
     "$PY" -m pip install --upgrade pip >/dev/null
     "$PY" -m pip install -r "$ROOT/tools/requirements.txt"
     echo
@@ -97,10 +110,13 @@ cmd_pull_log() {
     echo "Copying log.csv off the Pico ..."
     if [ -n "$port" ]; then
         "$MPREMOTE" connect "$port" cp :log.csv "$dest"
+        "$MPREMOTE" connect "$port" reset
     else
         "$MPREMOTE" cp :log.csv "$dest"
+        "$MPREMOTE" reset
     fi
     echo "Saved $dest"
+    echo "Pico reset; main.py is streaming again."
 }
 
 cmd_clear_log() {
@@ -125,10 +141,13 @@ cmd_clear_log() {
     local fail="Delete failed. Either there is no log.csv yet, or the port is busy (close Thonny or any serial monitor)."
     if [ -n "$port" ]; then
         "$MPREMOTE" connect "$port" rm :log.csv || { echo "$fail" >&2; exit 1; }
+        "$MPREMOTE" connect "$port" reset
     else
         "$MPREMOTE" rm :log.csv || { echo "$fail" >&2; exit 1; }
+        "$MPREMOTE" reset
     fi
     echo "Done. The firmware starts a fresh log.csv on its next run."
+    echo "Pico reset; main.py is streaming again."
 }
 
 case "${1:-help}" in
