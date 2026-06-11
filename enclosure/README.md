@@ -40,3 +40,5 @@ M3 10mm hole inserts should be sunk into the plastic and M3 20mm bolts can be us
   section, because thermal gradients across the bridge resistors appear as
   measurement error.
 - **Female AUX daughter board supports** have been added so that the small boards do not flex. Glue the blocks onto the Veroboard and Prestik them to the top so the boards don't move. A support has been added behind the boards to support the insert force.
+
+Most recent CAD file uploaded 11/06/2026 (v3)
